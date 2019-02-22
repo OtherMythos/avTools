@@ -27,10 +27,19 @@ class TestPlanExecution:
             if(i[1]):#TestCase failure
                 totalFailure += 1
 
-        failurePercentage = (totalFailure / len(self.testCaseResults)) * 100
+        passPercentage = 100 - (totalFailure / len(self.testCaseResults)) * 100
+
+        beginningColour = None
+        if(passPercentage == 100):
+            beginningColour = colour.GREEN
+        elif(passPercentage < 100 and passPercentage > 25):
+            beginningColour = colour.YELLOW
+        else:
+            beginningColour = colour.RED
+
 
         print("Total failures in test plan: " + str(totalFailure))
-        print("Failure percentage: " + str("%.2f" % failurePercentage))
+        print("Test Pass percentage: " + beginningColour + str("%.2f" % passPercentage) + "%" + colour.END)
 
     def execute(self):
         print("Executing test plan " + self.testPlanName)
@@ -39,6 +48,6 @@ class TestPlanExecution:
             caseResult = testCase.execute()
             self.testCaseResults.append(caseResult)
 
-        #All the test cases are not complete. Process the results.
+        #All the test cases are now complete. Process the results.
         print("Test plan " + self.testPlanName + " completed.")
         self.processResults()

@@ -7,12 +7,12 @@ import random
 targetPath = os.getcwd() + "/"
 mapName = "map"
 
-chunkStartX = 0
-chunkStartY = 0
+chunkStartX = -10
+chunkStartY = -10
 chunkEndX = 10
 chunkEndY = 10
 
-meshesNum = 10
+meshesNum = 2
 
 def createMapDirectory():
     if(os.path.isdir(targetPath + mapName)):

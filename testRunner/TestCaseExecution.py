@@ -5,6 +5,18 @@ import ConfigClass
 import subprocess
 import time
 
+class colour:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
+
 class TestCaseExecution:
     def __init__(self, testCasePath):
         self.testCasePath = testCasePath
@@ -61,6 +73,9 @@ class TestCaseExecution:
         print("Finishing test case " + self.getTestCaseName())
 
         testFilePath = self.testCasePath / "avTestFile.txt"
+        if(not testFilePath.exists() or not testFilePath.is_file()):
+            print("There was a problem loading the test file from the test run " + self.getTestCaseName())
+            return None
         testFile = open(testFilePath, 'r')
 
         lines = testFile.readlines()
@@ -73,17 +88,20 @@ class TestCaseExecution:
         failure = False
         failureMessageLines = []
         if(errorCode == -1):
-            print("Test case " + self.getTestCaseName() + " failed!")
+            print("Test case " + self.getTestCaseName() + colour.RED + " Failed" + colour.END + "!")
             failure = True
             failureMessageLines = lines[3:]
         elif(errorCode == 1):
-            print("Test case " + self.getTestCaseName() + " passed.")
+            print("Test case " + self.getTestCaseName() + colour.GREEN + " passed" + colour.END + ".")
         elif(errorCode == 0):
-            print("Engine crash during " + self.getTestCaseName() + " execution!")
+            print(colour.RED + "Engine crash during " + self.getTestCaseName() + " execution!" + colour.END)
             failure = True
 
+        print(colour.RED)
         for i in failureMessageLines:
             print(i, end='')
+        print(colour.END)
+
         testFile.close()
         return [errorCode, failure, failureMessageLines]
 
