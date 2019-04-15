@@ -17,9 +17,9 @@ def parseTestMasterFile(path):
             continue
 
 def runTestProject(path, testProjectPath):
-    file = Path(path)
-    targetPath = file.absolute().parent / testProjectPath
+    targetPath = path.absolute().parent / testProjectPath
     if(not targetPath.exists()):
+        print("Target path %s as specified in the avTests.cfg file does not exist." % testProjectPath)
         return False
 
     testPlanPaths = []
@@ -38,7 +38,6 @@ def runTestProject(path, testProjectPath):
     return True
 
 def beginRun(testConfig):
-    ConfigClass.pathToEngineExecutable = "/home/edward/Documents/avEngine/build/av"
     parseTestMasterFile(testConfig)
     runTestProject(testConfig, "integration")
 
@@ -59,12 +58,26 @@ def main():
 
     enginePath = Path(args.engine).absolute().resolve()
     ConfigClass.pathToEngineExecutable = ""
+
+    print("Trying engine path:")
     print(enginePath)
+
     if(enginePath.exists() and enginePath.is_file()):
         ConfigClass.pathToEngineExecutable = enginePath.resolve()
+        print("Engine path valid!")
     else:
-        print("No valid path to the engine executable was supplied. Failing.")
+        print("No valid path to the engine executable was supplied.")
+        print("Please try --help for more information.")
+        return
 
-    beginRun(args.path)
+    configPath = Path(args.path).absolute().resolve()
+    if(configPath.exists() and configPath.is_file()):
+        print("avTests.cfg file valid!")
+    else:
+        print("The avTests.cfg file provided was not found.")
+        print("Please try --help for more information.")
+        return
+
+    beginRun(configPath.resolve())
 
 main()

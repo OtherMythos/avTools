@@ -110,7 +110,6 @@ class TestCaseExecution:
 
         print("Executing test case " + self.getTestCaseName())
         #Now I need to start up the engine, passing in the path to the directory.
-        command = ConfigClass.pathToEngineExecutable + " " + str(self.testCasePath / "avSetup.cfg") + ' > /dev/null &'
 
         devnull = open(os.devnull, 'w')
         process = subprocess.Popen([ConfigClass.pathToEngineExecutable, str(self.testCasePath / "avSetup.cfg")], stdout=devnull, stderr=devnull)
