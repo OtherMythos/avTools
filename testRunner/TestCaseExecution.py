@@ -112,7 +112,8 @@ class TestCaseExecution:
         #Now I need to start up the engine, passing in the path to the directory.
 
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen([ConfigClass.pathToEngineExecutable, str(self.testCasePath / "avSetup.cfg")], stdout=devnull, stderr=devnull)
+        print(str(self.testCasePath / "avSetup.cfg"))
+        process = subprocess.Popen([str(ConfigClass.pathToEngineExecutable), str(self.testCasePath / "avSetup.cfg")], stdout=devnull, stderr=devnull)
         devnull.close()
 
         print("     with PID " + str(process.pid))
