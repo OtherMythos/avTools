@@ -24,6 +24,11 @@ class TestPlanExecution:
     def processResults(self):
         totalFailure = 0
         for i in self.testCaseResults:
+            if(i == None):
+                #Assume a none returned (unable to read the test file) is a failure.
+                totalFailure += 1
+                continue
+
             if(i[1]):#TestCase failure
                 totalFailure += 1
 

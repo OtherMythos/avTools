@@ -74,11 +74,19 @@ class TestCaseExecution:
 
         testFilePath = self.testCasePath / "avTestFile.txt"
         if(not testFilePath.exists() or not testFilePath.is_file()):
-            print("There was a problem loading the test file from the test run " + self.getTestCaseName())
+            print(colour.RED)
+            print("There was a problem loading the test file from the test run %s. This will be considered a failure." % self.getTestCaseName())
+            print(colour.END)
             return None
         testFile = open(testFilePath, 'r')
 
         lines = testFile.readlines()
+        testFile.close()
+        if(len(lines) <= 0):
+            #If no lines were written to the file at all, something went wrong in the engine. This should be considered a failure.
+            print(colour.RED + "Test " + self.getTestCaseName() + " returned an empty avTestFile." + colour.END)
+            return [0, True, []]
+
         #1 - Successfully finished
         #-1 - Test failed
         #0 - Test still in progress (as here means the process ended, it can be assumed that was because of a crash)
@@ -102,7 +110,6 @@ class TestCaseExecution:
             print(i, end='')
         print(colour.END)
 
-        testFile.close()
         return [errorCode, failure, failureMessageLines]
 
     def execute(self):
