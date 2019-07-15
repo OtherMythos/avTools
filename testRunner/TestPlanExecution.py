@@ -23,6 +23,7 @@ class TestPlanExecution:
 
     def processResults(self):
         totalFailure = 0
+        totalTests = len(self.testCaseResults)
         for i in self.testCaseResults:
             if(i == None):
                 #Assume a none returned (unable to read the test file) is a failure.
@@ -32,7 +33,7 @@ class TestPlanExecution:
             if(i[1]):#TestCase failure
                 totalFailure += 1
 
-        passPercentage = 100 - (totalFailure / len(self.testCaseResults)) * 100
+        passPercentage = 100 - (totalFailure / totalTests) * 100
 
         beginningColour = None
         if(passPercentage == 100):
@@ -46,6 +47,14 @@ class TestPlanExecution:
         print("Total failures in test plan: " + str(totalFailure))
         print("Test Pass percentage: " + beginningColour + str("%.2f" % passPercentage) + "%" + colour.END)
 
+        resultsDict = {
+            "TestPlanName": self.testPlanName,
+            "TotalTests": totalTests,
+            "TotalFailures": totalFailure
+        }
+
+        return resultsDict
+
     def execute(self):
         print("Executing test plan " + self.testPlanName)
 
@@ -55,4 +64,4 @@ class TestPlanExecution:
 
         #All the test cases are now complete. Process the results.
         print("Test plan " + self.testPlanName + " completed.")
-        self.processResults()
+        return self.processResults()

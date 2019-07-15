@@ -18,6 +18,7 @@ def parseTestMasterFile(path):
 
 def runTestProject(path, testProjectPath):
     targetPath = path.absolute().parent / testProjectPath
+    results = []
     if(not targetPath.exists()):
         print("Target path %s as specified in the avTests.cfg file does not exist." % testProjectPath)
         return False
@@ -33,13 +34,61 @@ def runTestProject(path, testProjectPath):
 
     for d in testPlanPaths:
         execution = TestPlanExecution(d)
-        execution.execute()
+        result = execution.execute()
+        results.append(result)
+
+    printResults(results)
 
     return True
 
 def beginRun(testConfig):
     parseTestMasterFile(testConfig)
     runTestProject(testConfig, "integration")
+
+def gatherResultsInfo(results):
+    totalTestsRan = 0
+    totalFailures = 0
+    for i in results:
+        totalTestsRan += i["TotalTests"]
+        totalFailures += i["TotalFailures"]
+
+    failureTestPlanCount = 0
+    for i in results:
+        if(i["TotalFailures"] > 0):
+            failureTestPlanCount += 1
+
+    info = {
+        "totalTestsRan":totalTestsRan,
+        "totalFailures":totalFailures,
+        "failureTestPlanCount":failureTestPlanCount
+    }
+    return info
+
+def printWithPadding(text, bannerString):
+    spaceDiff = int((len(bannerString) - len(text)) / 2)
+    print((" " * spaceDiff) + text)
+
+def printResults(results):
+    info = gatherResultsInfo(results)
+    sideBanner = "=" * 9
+    titleBanner = sideBanner + " Test Run Summary " + sideBanner
+    print("\n")
+    print(titleBanner)
+
+    if(info["totalFailures"] <= 0):
+        noFailString = "You have no failing tests"
+        #Figure out how many spaces is needed to centre this.
+
+        printWithPadding("Ran %i tests in total" % info["totalTestsRan"], titleBanner)
+        print(colour.GREEN)
+        printWithPadding(noFailString, titleBanner)
+        print(colour.END)
+    else:
+        #Failing tests.
+        print(colour.RED)
+        print("%i tests failed across %i test plans." % (info["totalFailures"], info["failureTestPlanCount"]))
+        printWithPadding("You have failing tests.", titleBanner)
+        print(colour.END)
 
 def main():
     helpText = '''A script to help batch run avEngine tests.
