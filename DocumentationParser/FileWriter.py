@@ -36,7 +36,29 @@ def writeFileText(file, namespace):
 
         file.write("\t" + i.description + "\n\n")
 
+def writeIndexFile(filePath, namespaces):
+    print("Generating index file at: " + str(filePath))
+    f = open(filePath, "w")
 
+    f.write(
+    """Squirrel API
+============
+
+This is the documentation for the squirrel api calls.
+
+Function Namespaces
+-------------------
+
+.. toctree::
+    :maxdepth: 1
+    :name: toc-squirrl-functions
+
+""")
+
+    for i in namespaces:
+        f.write("    " + i.name + ".rst\n")
+
+    f.close()
 
 def writeNamespacesRst(outDirectory, namespaces):
     for i in namespaces:
@@ -45,3 +67,6 @@ def writeNamespacesRst(outDirectory, namespaces):
         f = open(filePath, "w")
         writeFileText(f, i)
         f.close()
+
+    indexFilePath = outDirectory / "index.rst"
+    writeIndexFile(indexFilePath, namespaces)

@@ -58,6 +58,7 @@ def parseFiles(path):
 
 def parseSingleFile(path):
     namespace = NamespaceEntry()
+    namespace.functions = []
 
     with open(path, 'r') as f:
         content = f.readlines()
