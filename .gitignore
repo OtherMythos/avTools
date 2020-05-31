@@ -2,5 +2,7 @@ testRunner/__pycache__/
 testRunner/Ogre.log
 *.metal
 *.hlsl
+*.glsl
 imgui.ini
 __pycache__
+build
