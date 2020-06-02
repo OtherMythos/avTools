@@ -22,7 +22,7 @@ SquirrelFramework::~SquirrelFramework(){
     _shutdowVM();
 }
 
-float SquirrelFramework::run(){
+void SquirrelFramework::run(){
 
 }
 

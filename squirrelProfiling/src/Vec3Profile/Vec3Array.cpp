@@ -22,7 +22,7 @@ SQInteger Vec3Array::createVec3(HSQUIRRELVM vm){
     return 1;
 }
 
-float Vec3Array::run(){
+void Vec3Array::run(){
     _setupSquirrel();
 
     _execute();

@@ -7,7 +7,7 @@ public:
     Vec3UserData();
     ~Vec3UserData();
 
-    float run();
+    void run();
 
 private:
     void _setupSquirrel();

@@ -33,7 +33,7 @@ SQInteger Vec3Class::createVec3Get(HSQUIRRELVM vm){
     return 1;
 }
 
-float Vec3Class::run(){
+void Vec3Class::run(){
     _setupSquirrel();
 
     _execute();

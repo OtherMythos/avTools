@@ -60,7 +60,7 @@ SQInteger Vec3UserData::setMetamethod(HSQUIRRELVM vm){
     return 0;
 }
 
-float Vec3UserData::run(){
+void Vec3UserData::run(){
     _setupSquirrel();
 
     _execute();

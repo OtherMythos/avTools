@@ -7,7 +7,7 @@ public:
     SquirrelFramework();
     virtual ~SquirrelFramework();
 
-    virtual float run();
+    virtual void run();
 
 protected:
     HSQUIRRELVM mSqvm;
