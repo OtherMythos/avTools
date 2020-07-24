@@ -2,20 +2,34 @@
     oldMouseX = 0,
     oldMouseY = 0,
 
+    meshItem = null,
     cameraNode = null,
     mouseDown = false,
+    currentZoomLevel = 1.8,
 
     function setup(){
         local containerNode = _scene.getRootSceneNode().createChildSceneNode();
 
-        local meshItem = _scene.createItem("cube");
+        local targetMesh = _settings.getUserSetting("targetMesh");
+
+        try{
+            meshItem = _scene.createItem(targetMesh);
+        }catch(e){
+            //The mesh provided by the user might have been invalid, so check that.
+        }
         containerNode.attachObject(meshItem);
 
         //Position the camera.
-        _camera.setPosition(0, 0, 10);
-        _camera.lookAt(0, 0, 0);
+        positionCameraToZoom(currentZoomLevel);
 
         this.cameraNode = _scene.getRootSceneNode().createChildSceneNode();
+    },
+
+    function positionCameraToZoom(zoom){
+        local meshRadius = meshItem.getLocalRadius();
+        _camera.setPosition(0, 0, meshRadius * zoom);
+
+        _camera.lookAt(0, 0, 0);
     },
 
     function processMouseMovement(){
