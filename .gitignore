@@ -1,5 +1,5 @@
 testRunner/__pycache__/
-testRunner/Ogre.log
+Ogre.log
 *.metal
 *.hlsl
 *.glsl
