@@ -30,6 +30,7 @@
         _camera.setPosition(0, 0, meshRadius * zoom);
 
         _camera.lookAt(0, 0, 0);
+        currentZoomLevel = zoom;
     },
 
     function processMouseMovement(){
@@ -60,6 +61,11 @@
             mouseDown = true;
         }else{
             mouseDown = false;
+        }
+        local mouseScroll = _input.getMouseWheelValue();
+        if(mouseScroll != 0){
+            print(mouseScroll)
+            positionCameraToZoom(currentZoomLevel + (mouseScroll * 0.1));
         }
     }
 };
