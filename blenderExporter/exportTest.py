@@ -30,7 +30,7 @@ def main():
         if ob.type != 'MESH':
             continue
 
-        dot_mesh(ob, "/tmp/3")
+        dot_mesh(ob, outPath)
 
 if __name__ == "__main__":
     main()
