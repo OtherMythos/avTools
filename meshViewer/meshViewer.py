@@ -5,10 +5,26 @@ import json
 import os
 import subprocess
 from pathlib import Path
+import shutil
 
 def getSetupFileOutput():
     #On windows this would be something different, which is why I made it a function.
     return "/tmp/avSetup.cfg"
+
+'''
+Create a directory somewhere temporary which will behave as the current working directory.
+This is to make sure the hlms shaders or other ogre stuff ends up somewhere other than one of the user's directories.
+'''
+def getTemporaryCWD():
+    #On windows this will be something else.
+    targetDir = "/tmp"
+
+    target = Path(targetDir) / "meshViewer"
+    if target.exists():
+        shutil.rmtree(target)
+    target.mkdir()
+
+    return target
 
 def produceSetupFile(meshPath):
     resourceLocations = []
@@ -22,9 +38,11 @@ def produceSetupFile(meshPath):
         print("Please provide a path to a file.")
         return False
 
-    if(objectPath.is_absolute()):
-        resourceLocations.append(objectPath.parent)
-        targetMesh = objectPath.name
+    objectPath = objectPath.resolve()
+    assert objectPath.exists()
+
+    resourceLocations.append(objectPath.parent)
+    targetMesh = objectPath.name
 
     data = {}
     data["Project"] = "Mesh Viewer"
@@ -68,8 +86,10 @@ def main():
     if(not result):
         return
 
+
+    targetCWD = getTemporaryCWD()
     devnull = open(os.devnull, 'w')
-    process = subprocess.Popen(["/home/edward/Documents/avEngine/build/av", "/tmp/avSetup.cfg"], stdout=devnull, stderr=devnull)
+    process = subprocess.Popen(["/home/edward/Documents/avEngine/build/av", "/tmp/avSetup.cfg"], stdout=devnull, stderr=devnull, cwd=str(targetCWD))
     devnull.close()
 
 

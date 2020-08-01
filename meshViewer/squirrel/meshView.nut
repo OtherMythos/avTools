@@ -11,6 +11,7 @@
         local containerNode = _scene.getRootSceneNode().createChildSceneNode();
 
         local targetMesh = _settings.getUserSetting("targetMesh");
+        assert(targetMesh != "");
 
         try{
             meshItem = _scene.createItem(targetMesh);
