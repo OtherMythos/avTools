@@ -6,6 +6,8 @@
     cameraNode = null,
     mouseDown = false,
     currentZoomLevel = 1.8,
+    validMesh = true,
+    errorReason = ""
 
     function setup(){
         local containerNode = _scene.getRootSceneNode().createChildSceneNode();
@@ -16,7 +18,10 @@
         try{
             meshItem = _scene.createItem(targetMesh);
         }catch(e){
-            //The mesh provided by the user might have been invalid, so check that.
+            //The mesh provided by the user was invalid.
+            validMesh = false;
+            errorReason = e;
+            return;
         }
         containerNode.attachObject(meshItem);
 
@@ -35,6 +40,8 @@
     },
 
     function processMouseMovement(){
+        if(!validMesh) return;
+
         local xPos = _input.getMouseX();
         local yPos = _input.getMouseY();
 
@@ -52,6 +59,8 @@
     },
 
     function update(){
+        if(!validMesh) return;
+
         if(_input.getMouseButton(0)){
             if(!mouseDown){
                 oldMouseX = _input.getMouseX();

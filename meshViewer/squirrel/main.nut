@@ -4,6 +4,9 @@ function start(){
 
     MeshGui.setup();
     MeshView.setup();
+    if(!MeshView.validMesh){
+        MeshGui.notifyInvalidMesh(MeshView.errorReason);
+    }
 }
 
 function update(){
