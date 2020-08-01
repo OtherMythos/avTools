@@ -46,7 +46,7 @@ def produceSetupFile(meshPath):
 
     data = {}
     data["Project"] = "Mesh Viewer"
-    data["CompositorBackground"] = "1 0 1 1"
+    data["CompositorBackground"] = "0.156 0.184 0.215 1"
     data["SquirrelEntryFile"] = "main.nut"
     data["DataDirectory"] = "/home/edward/Documents/avTools/meshViewer/squirrel/"
     data["OgreResourcesFile"] = "/tmp/OgreResources.cfg"
