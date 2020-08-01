@@ -3,6 +3,7 @@
 import argparse
 from directoryScanner import DirectoryScanner
 from exportManager import ExportManager
+from pathlib import Path
 
 def main():
     helpText = '''A script capable of taking asset project files and producting resources which can be accepted by the avEngine.
@@ -18,6 +19,8 @@ def main():
     parser.add_argument('InputDirectory', metavar='I', type=str, nargs='?', help='A path to the input directory.', default=None)
     parser.add_argument('OutputDirectory', metavar='O', type=str, nargs='?', help='A path to the output directory.', default=None)
 
+    parser.add_argument("-p", "--purge", help="Purge XML files produced from blender export", default=True, type=bool, nargs='?')
+
     parser.add_argument("-b", "--blender", help="The path to a blender executable.", default="blender")
     args = parser.parse_args()
 
@@ -25,6 +28,10 @@ def main():
         print("Please provide both an input and output directory path")
         return
 
+
+    shouldPurgeXML = False
+    if args.purge is None:
+        shouldPurgeXML = True
 
     exporter = ExportManager(args.blender)
     if not exporter.executableValid():
@@ -36,6 +43,10 @@ def main():
     if not result:
         #Something failed
         return
+
+    outputPath = Path(args.OutputDirectory)
+    if shouldPurgeXML:
+        exporter.recursivePurgeXMLMeshes(outputPath)
 
 if __name__ == "__main__":
     main()
