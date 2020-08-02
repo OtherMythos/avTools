@@ -50,8 +50,12 @@ def produceSetupFile(meshPath):
     data["SquirrelEntryFile"] = "main.nut"
     data["DataDirectory"] = "/home/edward/Documents/avTools/meshViewer/squirrel/"
     data["OgreResourcesFile"] = "/tmp/OgreResources.cfg"
+    data["NumWorkerThreads"] = 1 #The minimum number
     data["UserSettings"] = {
         "targetMesh" : targetMesh
+    }
+    data["DynamicPhysics"] = {
+        "disabled" : True
     }
 
     with open(getSetupFileOutput(), 'w') as outfile:
