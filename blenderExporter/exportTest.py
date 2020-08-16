@@ -9,6 +9,7 @@ Read through all visible objects in the scene and export them as a mesh.
 '''
 def main():
     from io_ogre.ogre.mesh import dot_mesh
+    from io_ogre.ogre.skeleton import dot_skeleton
 
     try:
         idx = sys.argv.index('--')
@@ -31,6 +32,7 @@ def main():
             continue
 
         dot_mesh(ob, outPath)
+        dot_skeleton(ob, outPath)
 
 if __name__ == "__main__":
     main()
