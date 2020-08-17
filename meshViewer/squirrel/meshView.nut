@@ -9,9 +9,11 @@
     meshItem = null,
     cameraNode = null,
     mouseDown = false,
+    meshOriginPoint = null,
     currentZoomLevel = 1.8,
     validMesh = true,
     errorReason = "",
+    meshSkeletonAnimation = null,
 
     function setup(){
         local containerNode = _scene.getRootSceneNode().createChildSceneNode();
@@ -29,14 +31,40 @@
         }
         containerNode.attachObject(meshItem);
 
+        local meshAabb = meshItem.getLocalAabb();
+        meshOriginPoint = meshAabb.getCentre();
+
         //Position the camera.
         local meshRadius = meshItem.getLocalRadius();
-        currentZoomLevel = meshRadius * 1.8;
+        currentZoomLevel = meshAabb.getSize().y * 1.6;
         scrollWheelStrength = meshRadius * 0.1;
         positionCameraToZoom(currentZoomLevel);
 
         this.cameraNode = _scene.getRootSceneNode().createChildSceneNode();
 
+        if(meshItem.hasSkeleton()){
+            local skeleton = meshItem.getSkeleton();
+            local animation = skeleton.getAnimation("Run");
+
+            animation.setEnabled(true);
+            animation.setLoop(true);
+            meshSkeletonAnimation = animation;
+            /* for(local i = 0; i < skeleton.getNumBones(); i++){
+                local bone = skeleton.getBone(i);
+                print(bone.getName());
+            } */
+            local bone = skeleton.getBone(0);
+            iterateBone(bone);
+        }
+    },
+
+    function iterateBone(bone){
+        print(bone.getName());
+        print(bone.getNumChildrenBones());
+        for(local i = 0; i < bone.getNumChildrenBones(); i++){
+            local newBone = bone.getChildBone(i);
+            iterateBone(newBone);
+        }
     },
 
     function positionCameraToZoom(zoom){
@@ -72,12 +100,16 @@
     function positionCamera(){
         local xPos = cos(rotX)*currentZoomLevel;
         local yPos = sin(rotX)*currentZoomLevel;
-        _camera.setPosition(xPos, 0, yPos);
-        _camera.lookAt(0, 0, 0);
+        _camera.setPosition(xPos, this.meshOriginPoint.y, yPos);
+        _camera.lookAt(this.meshOriginPoint);
     },
 
     function update(){
         if(!validMesh) return;
+
+        if(meshSkeletonAnimation){
+            meshSkeletonAnimation.addTime(0.001);
+        }
 
         if(_input.getMouseButton(0)){
             if(!mouseDown){

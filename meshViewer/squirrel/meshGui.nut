@@ -3,7 +3,10 @@
     guiWindow = null,
     meshNameLabel = null,
     meshInfoLabel = null,
-    layout = null
+    layout = null,
+
+    meshAnimationWindow = null,
+    meshAnimationName = null,
 
     function setup(){
         guiWindow = _gui.createWindow();
@@ -23,6 +26,15 @@
 
         layout.layout();
     },
+
+    function setupAnimationWindow(){
+        meshAnimationWindow = _gui.createWindow();
+        meshAnimationWindow.setPosition(0, 110);
+        meshAnimationWindow.setSize(500, 100);
+
+        meshAnimationName = meshAnimationWindow.createLabel();
+        meshAnimationName.setText("Animation Name");
+    }
 
     function notifyInvalidMesh(errorReason){
         meshInfoLabel.setText(errorReason);
