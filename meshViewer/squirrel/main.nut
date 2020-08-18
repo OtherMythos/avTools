@@ -7,13 +7,13 @@ function start(){
     MeshView.setup();
     if(!MeshView.validMesh){
         MeshGui.notifyInvalidMesh(MeshView.errorReason);
+        return;
     }
-    //Probably have a better way to get this at some point.
-    if(MeshView.meshSkeletonAnimation != null){
-        AnimationGui.setup();
-    }
+
+    AnimationGui.setup(MeshView);
 }
 
 function update(){
     MeshView.update();
+    AnimationGui.update(0.01);
 }

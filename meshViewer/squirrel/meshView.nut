@@ -42,7 +42,7 @@
 
         this.cameraNode = _scene.getRootSceneNode().createChildSceneNode();
 
-        if(meshItem.hasSkeleton()){
+        /*if(meshItem.hasSkeleton()){
             local skeleton = meshItem.getSkeleton();
             local animation = skeleton.getAnimation("Run");
 
@@ -53,9 +53,9 @@
                 local bone = skeleton.getBone(i);
                 print(bone.getName());
             } */
-            local bone = skeleton.getBone(0);
+            /*local bone = skeleton.getBone(0);
             iterateBone(bone);
-        }
+        }*/
     },
 
     function iterateBone(bone){
