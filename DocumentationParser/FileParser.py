@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 class ParsedEntry:
     name = ""
@@ -47,6 +48,9 @@ def parseFiles(path):
             targetPath = os.path.join(root, i)
             if(os.path.isdir(targetPath)):
                 continue
+            parsedPath = Path(targetPath)
+            if parsedPath.suffix != ".cpp" or parsedPath.suffix != ".h":
+                continue
 
             parsedNamespace = parseSingleFile(targetPath)
 
@@ -62,7 +66,7 @@ def parseSingleFile(path):
 
     with open(path, 'r') as f:
         content = f.readlines()
-        currentLine = 0;
+        currentLine = 0
         for i in content:
             if("/**SQFunction" in i):
                 result = beginParsingContent(content, currentLine)
