@@ -2,7 +2,7 @@
 
 import configparser
 from pathlib import Path
-from FileParser import *
+from FileParser import FileParser
 from FileWriter import *
 import os
 import argparse
@@ -33,13 +33,15 @@ def main():
     print(sourcePath)
 
     if(sourcePath.exists() and sourcePath.is_dir()):
-        namespaces = beginFileParse(sourcePath)
-        if(dirPath.exists() and dirPath.is_dir()):
-            print("writing rst files")
-            writeRstFiles(namespaces, dirPath)
-    else:
-        print("No valid path to a directory was supplied.")
-        print("Please try --help for more information.")
-        return
+        parser = FileParser()
+        parser.parseFiles(sourcePath)
+        # namespaces = beginFileParse(sourcePath)
+        # if(dirPath.exists() and dirPath.is_dir()):
+        #     print("writing rst files")
+    #         writeRstFiles(namespaces, dirPath)
+    # else:
+    #     print("No valid path to a directory was supplied.")
+    #     print("Please try --help for more information.")
+    #     return
 
 main()

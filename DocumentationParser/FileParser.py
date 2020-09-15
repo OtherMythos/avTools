@@ -1,7 +1,175 @@
 import os
 import sys
 from pathlib import Path
+from enum import Enum
 
+'''
+Abstracts the logic for parsing a single file.
+This class will collect all the data and namespaces found within the file.
+'''
+class ParsedFile:
+    '''
+    What type of object is currently being parsed.
+    '''
+    class ParseType(Enum):
+        NONE = 0
+        NAMESPACE = 1
+
+    SQNAMESPACE = "/**SQNamespace"
+    SQTERMINATOR = "*/"
+
+    def __init__(self, path):
+        self.filePath = path
+        self.currentLine = -1 # Start at -1 so the first readLine reads 0
+        self.fileEnd = False
+        self.fileContent = None
+        self.failureReason = ""
+
+    def parse(self):
+
+        with open(self.filePath, 'r') as f:
+            self.fileContent = f.readlines()
+            self._parse()
+
+            f.close()
+
+    def _parse(self):
+        while not self.fileEnd:
+            line = self.readLine()
+
+            if self.SQNAMESPACE in line:
+                print(line)
+                self.parseNamespaceType()
+
+        #return self.ParseType.NONE
+
+    def parseNamespaceType(self):
+        line = self.getCurrentLine()
+        assert self.SQNAMESPACE in line
+        startPos = line.find(self.SQNAMESPACE)
+        startLine = line[startPos:]
+        print(startLine)
+
+        values = self.readValuesFromGroup(startLine)
+
+        #Find some way to pull the values from here.
+        #When it finds an @, the new context is set, (i.e name, desc)
+        #All this data can be on the same line, or on multiple.
+        #Really I need a universal function which is able to parse these values from strings, and return a dictionary by name and contents, no matter whether it's on the same line or multiple.
+
+
+    '''
+    Read in the values from a number of lines and produce a dictionary of keys and their values found within this list.
+    '''
+    def readValuesFromGroup(self, startLine):
+        currentParse = "none"
+        parsingContent = True
+
+        returnedVals = {}
+        def writeToVals(state, value):
+            if not state in returnedVals:
+                returnedVals[state] = ""
+            returnedVals[state] += value
+
+        currentLine = startLine
+        while(parsingContent):
+            if self.SQTERMINATOR in currentLine:
+                idx = currentLine.find(self.SQTERMINATOR)
+                currentLine = currentLine[:idx]
+                #Stop parsing after this line is done with.
+                parsingContent = False
+
+            if "@" in currentLine:
+                #This line contains 1 or more changes to the state. In this case loop through each character and check it.
+                workingLine = currentLine
+                currentLineParse = currentParse
+                currentIdx = 0
+                for i in currentLine:
+                    if i == '@':
+                        #Take whatever was before the @ and commit it.
+                        prevContent = workingLine[:currentIdx]
+                        writeToVals(currentLineParse, prevContent)
+
+                        workingLine = workingLine[currentIdx:]
+                        #What if this finds the end of the file?
+                        spaceIdx = workingLine.find(" ")
+                        if spaceIdx == -1:
+                            #No space was found, meaning the @ was malformed.
+                            self.failureReason = "Malformed @ description."
+                            return {}
+                        #1 to strip away the @ symbol.
+                        currentLineParse = workingLine[1:spaceIdx]
+                        #+1 to not include the space
+                        workingLine = workingLine[spaceIdx+1:]
+
+                        currentIdx = 0
+
+                    currentIdx += 1
+
+                #Write whatever we have left to our current parser state.
+                if workingLine != '':
+                    writeToVals(currentLineParse, workingLine + '\n')
+                #Set whatever the current parsing type is.
+                currentParse = currentLineParse
+
+            else:
+                #There is no change to the current parser state, so just write into the list.
+                if currentLine != '':
+                    writeToVals(currentParse, currentLine + '\n')
+
+
+            if not parsingContent:
+                #Don't go past here if the terminator value was found.
+                continue
+            currentLine = self.readLine()
+            if self.fileEnd:
+                parsingContent = False
+
+        return returnedVals
+
+    def getCurrentLine(self):
+        assert self.currentLine < len(self.fileContent)
+        return self.fileContent[self.currentLine]
+
+    def readLine(self):
+        self.currentLine+=1
+        if(self.currentLine >= len(self.fileContent)):
+            self.fileEnd = True
+            return ""
+        return self.fileContent[self.currentLine]
+
+
+'''
+A class to manage the parsing of files and their contents.
+Reads through files in the provided directory, filling containers with the data it finds.
+'''
+class FileParser:
+    def __init__(self):
+        pass
+
+    def parseFiles(self, path):
+        for root, subdirs, files in os.walk(path):
+            print("-- %s" % root)
+            for i in files:
+                print("\t%s" % i)
+                targetPath = Path(root) / i
+                assert not targetPath.is_dir()
+
+                if targetPath.suffix != ".cpp" and targetPath.suffix != ".h":
+                    continue
+
+
+                self.parseSingleFile(targetPath)
+
+                # if(parsedNamespace.valid()):
+                #     printNamespaceDescription(parsedNamespace)
+                #     foundNamespaces.append(parsedNamespace)
+
+    def parseSingleFile(self, filePath):
+        file = ParsedFile(filePath)
+        file.parse()
+
+'''
 class ParsedEntry:
     name = ""
     returnDescription = ""
@@ -164,3 +332,4 @@ def printNamespaceDescription(namespace):
                 print("\t\t\tparam%i: %s" % (current, y))
             current += 1
         print("")
+'''
