@@ -18,12 +18,16 @@ class ParsedFile:
     SQNAMESPACE = "/**SQNamespace"
     SQTERMINATOR = "*/"
 
+    SQNAMESPACE_NAME = "name"
+    SQNAMESPACE_DESCRIPTION = "desc"
+
     def __init__(self, path):
         self.filePath = path
         self.currentLine = -1 # Start at -1 so the first readLine reads 0
         self.fileEnd = False
         self.fileContent = None
         self.failureReason = ""
+        self.foundValues = {}
 
     def parse(self):
 
@@ -32,6 +36,8 @@ class ParsedFile:
             self._parse()
 
             f.close()
+
+        print("found " + str(self.foundValues))
 
     def _parse(self):
         while not self.fileEnd:
@@ -52,11 +58,17 @@ class ParsedFile:
 
         values = self.readValuesFromGroup(startLine)
 
-        #Find some way to pull the values from here.
-        #When it finds an @, the new context is set, (i.e name, desc)
-        #All this data can be on the same line, or on multiple.
-        #Really I need a universal function which is able to parse these values from strings, and return a dictionary by name and contents, no matter whether it's on the same line or multiple.
+        if not self.SQNAMESPACE_NAME in values or not self.SQNAMESPACE_DESCRIPTION in values:
+            return
 
+        foundNamespace = {
+            self.SQNAMESPACE_NAME:values[self.SQNAMESPACE_NAME],
+            self.SQNAMESPACE_DESCRIPTION:values[self.SQNAMESPACE_DESCRIPTION],
+        }
+
+        if "namespaces" not in self.foundValues:
+            self.foundValues["namespaces"] = []
+        self.foundValues["namespaces"].append(foundNamespace)
 
     '''
     Read in the values from a number of lines and produce a dictionary of keys and their values found within this list.
@@ -69,7 +81,7 @@ class ParsedFile:
         def writeToVals(state, value):
             if not state in returnedVals:
                 returnedVals[state] = ""
-            returnedVals[state] += value
+            returnedVals[state] += value.rstrip()
 
         currentLine = startLine
         while(parsingContent):
