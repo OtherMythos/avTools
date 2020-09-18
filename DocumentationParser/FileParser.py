@@ -158,6 +158,7 @@ Reads through files in the provided directory, filling containers with the data 
 class FileParser:
     def __init__(self):
         pass
+        self.foundData = {}
 
     def parseFiles(self, path):
         for root, subdirs, files in os.walk(path):
@@ -171,15 +172,21 @@ class FileParser:
                     continue
 
 
-                self.parseSingleFile(targetPath)
+                file = ParsedFile(targetPath)
+                file.parse()
 
-                # if(parsedNamespace.valid()):
-                #     printNamespaceDescription(parsedNamespace)
-                #     foundNamespaces.append(parsedNamespace)
+                #Commit what was found to the file parser list.
+                self.mergeFoundValues(file)
 
-    def parseSingleFile(self, filePath):
-        file = ParsedFile(filePath)
-        file.parse()
+        #print("FOUND " + str(self.foundData))
+
+    def mergeFoundValues(self, parsedFile):
+        for i in parsedFile.foundValues:
+            if not i in self.foundData:
+                self.foundData[i] = parsedFile.foundValues[i]
+                continue
+            self.foundData[i] += parsedFile.foundValues[i]
+
 
 '''
 class ParsedEntry:

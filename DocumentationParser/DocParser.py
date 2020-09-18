@@ -35,13 +35,10 @@ def main():
     if(sourcePath.exists() and sourcePath.is_dir()):
         parser = FileParser()
         parser.parseFiles(sourcePath)
-        # namespaces = beginFileParse(sourcePath)
-        # if(dirPath.exists() and dirPath.is_dir()):
-        #     print("writing rst files")
-    #         writeRstFiles(namespaces, dirPath)
-    # else:
-    #     print("No valid path to a directory was supplied.")
-    #     print("Please try --help for more information.")
-    #     return
+
+        print("FOUND: " + str(parser.foundData))
+
+        writer = FileWriter(parser.foundData)
+        writer.writeRst(dirPath)
 
 main()

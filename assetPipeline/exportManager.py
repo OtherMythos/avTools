@@ -30,6 +30,6 @@ class ExportManager:
 
         #./blender -b ~/Documents/meshTests/newMesh/Grave.blend --python ~/Documents/avTools/exportTest.py -- /tmp/3
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen([str(self.blenderPath), "-b", str(filePath), "--python", "../blenderExporter/exportTest.py", "--", str(outputPath)], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen([str(self.blenderPath), "-b", str(filePath), "--python", "../blenderExporter/exportTest.py", "--", str(outputPath)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         process.wait()
         devnull.close()
