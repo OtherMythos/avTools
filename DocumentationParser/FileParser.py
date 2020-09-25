@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from pathlib import Path
 from enum import Enum
 
@@ -16,10 +17,14 @@ class ParsedFile:
         NAMESPACE = 1
 
     SQNAMESPACE = "/**SQNamespace"
+    SQFUNCTION = "/**SQFunction"
     SQTERMINATOR = "*/"
 
     SQNAMESPACE_NAME = "name"
     SQNAMESPACE_DESCRIPTION = "desc"
+    SQFUNCTION_NAME = "name"
+    SQFUNCTION_RETURNS = "returns"
+    SQFUNCTION_DESCRIPTION = "desc"
 
     def __init__(self, path):
         self.filePath = path
@@ -28,6 +33,8 @@ class ParsedFile:
         self.fileContent = None
         self.failureReason = ""
         self.foundValues = {}
+
+        self.currentNamespace = None
 
     def parse(self):
 
@@ -44,10 +51,89 @@ class ParsedFile:
             line = self.readLine()
 
             if self.SQNAMESPACE in line:
-                print(line)
+                #print(line)
                 self.parseNamespaceType()
+                continue
+            if self.SQFUNCTION in line:
+                self.parseFunctionType()
+                continue
 
         #return self.ParseType.NONE
+
+    def parseFunctionType(self):
+        line = self.getCurrentLine()
+        assert self.SQFUNCTION in line
+        startPos = line.find(self.SQFUNCTION)
+        startLine = line[startPos:]
+
+        values = self.readValuesFromGroup(startLine)
+        if not self.SQFUNCTION_NAME in values:
+            return
+
+        #Some of these are optional, some are not.
+        foundFunction = {
+            self.SQFUNCTION_NAME: values[self.SQFUNCTION_NAME],
+        }
+        if self.SQFUNCTION_RETURNS in values:
+            foundFunction[self.SQFUNCTION_RETURNS] = values[self.SQFUNCTION_RETURNS]
+        if self.SQFUNCTION_DESCRIPTION in values:
+            foundFunction[self.SQFUNCTION_DESCRIPTION] = values[self.SQFUNCTION_DESCRIPTION]
+
+        for i in values:
+            if not "param" in i:
+                continue
+            foundParam = self.parseParamInfo(i)
+            if(foundParam is None):
+                continue
+            foundParam["desc"] = foundParam["surplus"] + values[i]
+            del foundParam["surplus"]
+            if not "params" in foundFunction:
+                foundFunction["params"] = []
+            foundFunction["params"].append(foundParam)
+
+
+
+        #Make a note of which namespace this function belonged to.
+        if self.currentNamespace is not None:
+            foundFunction["namespace"] = self.currentNamespace[self.SQNAMESPACE_NAME]
+        else:
+            foundFunction["namespace"] = None
+
+        if "functions" not in self.foundValues:
+            self.foundValues["functions"] = []
+        self.foundValues["functions"].append(foundFunction)
+
+    def parseParamInfo(self, value):
+        pattern = re.compile("^param(\d+)(:\w+)?:(\w|\s)*$")
+        if not pattern.match(value):
+            return None
+
+        idx = value.find(":")
+        #At least one : should be found, if the regex passed that is.
+        assert idx >= 0
+        #Remove the 'param'
+        paramId = int(value[5:idx])
+
+        newValue = value[idx+1:]
+        idx = newValue.find(":")
+        paramType = None
+        surplus = None
+        if idx < 0:
+            #In this case, no type specification was provided.
+            #Just take the rest of the content as the surplus.
+            surplus = newValue
+        else:
+            paramType = newValue[:idx]
+            surplus = newValue[idx+1:]
+
+        surplus = surplus.lstrip()
+
+        retVal = {
+            "id": paramId,
+            "type": paramType,
+            "surplus": surplus
+        }
+        return retVal
 
     def parseNamespaceType(self):
         line = self.getCurrentLine()
@@ -69,6 +155,8 @@ class ParsedFile:
         if "namespaces" not in self.foundValues:
             self.foundValues["namespaces"] = []
         self.foundValues["namespaces"].append(foundNamespace)
+
+        self.currentNamespace = foundNamespace
 
     '''
     Read in the values from a number of lines and produce a dictionary of keys and their values found within this list.

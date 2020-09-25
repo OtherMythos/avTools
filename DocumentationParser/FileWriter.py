@@ -14,20 +14,27 @@ class FileWriter:
 
         file.write("API\n^^^\n")
 
-        #TODO disabled for now.
-        #Next time, include functions in the namespace writes to grab functions.
-        return
-        for i in namespace.functions:
+        if not "functions" in self.foundData:
+            return
+
+        for i in self.foundData["functions"]:
+            if i["namespace"] is None:
+                continue
+            if i["namespace"] != namespace["name"]:
+                continue
+
             functionDef = ".. js:function:: "
-            functionDef += i.name
+            functionDef += i["name"]
             functionDef += "("
 
             addedValues = False
-            for y in i.parameters:
-                if(y[0] != ""):
-                    addedValues = True
-                    functionDef += y[1] + ", "
-                    #functionDef += "#, "
+            if "params" in i:
+                for y in i["params"]:
+                    type = y["type"]
+                    if(type != None):
+                        addedValues = True
+                        functionDef += str(type) + ", "
+                        #functionDef += "#, "
 
             if(addedValues):
                 #Remove the final , if this was the final entry
@@ -35,17 +42,21 @@ class FileWriter:
             functionDef += ")\n\n"
             file.write(functionDef)
 
-            for y in range(len(i.parameters)):
-                e = i.parameters[y]
-                if(e[0] != "" and e[1] != ""):
-                    file.write("\t:param "+e[1]+": "+e[0]+"\n")
+            if addedValues:
+                parameters = i["params"]
+                for y in range(len(parameters)):
+                    e = parameters[y]
+                    if(e["type"] != None and e["desc"] != None):
+                        file.write("\t:param "+e["type"]+": "+e["desc"]+"\n")
 
 
-            if(i.returnDescription):
-                file.write("\t:returns: " + i.returnDescription + "\n\n")
+            if("returns" in i):
+                file.write("\t:returns: " + i["returns"] + "\n\n")
 
-
-            file.write("\t" + i.description + "\n\n")
+            if "desc" in i:
+                file.write("\t" + i["desc"] + "\n\n")
+            else:
+                file.write("\n")
 
     def writeIndexFile(self, filePath):
         print("Generating index file at: " + str(filePath))
