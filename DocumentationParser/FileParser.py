@@ -18,6 +18,7 @@ class ParsedFile:
 
     SQNAMESPACE = "/**SQNamespace"
     SQFUNCTION = "/**SQFunction"
+    SQCONSTANT = "/**SQConstant"
     SQTERMINATOR = "*/"
 
     SQNAMESPACE_NAME = "name"
@@ -25,6 +26,8 @@ class ParsedFile:
     SQFUNCTION_NAME = "name"
     SQFUNCTION_RETURNS = "returns"
     SQFUNCTION_DESCRIPTION = "desc"
+    SQCONSTANT_NAME = "name"
+    SQCONSTANT_DESCRIPTION = "desc"
 
     def __init__(self, path):
         self.filePath = path
@@ -57,8 +60,38 @@ class ParsedFile:
             if self.SQFUNCTION in line:
                 self.parseFunctionType()
                 continue
+            if self.SQCONSTANT in line:
+                self.parseConstantType()
+                continue
 
         #return self.ParseType.NONE
+
+    def parseConstantType(self):
+        line = self.getCurrentLine()
+        assert self.SQCONSTANT in line
+        startPos = line.find(self.SQCONSTANT)
+        startLine = line[startPos:]
+
+        values = self.readValuesFromGroup(startLine)
+        if not self.SQCONSTANT_NAME in values:
+            return
+
+        foundConstant = {
+            self.SQCONSTANT_NAME: values[self.SQCONSTANT_NAME],
+        }
+
+        if self.SQCONSTANT_DESCRIPTION in values:
+            foundConstant[self.SQCONSTANT_DESCRIPTION] = values[self.SQCONSTANT_DESCRIPTION]
+
+        #Make a note of which namespace this constant belonged to.
+        if self.currentNamespace is not None:
+            foundConstant["namespace"] = self.currentNamespace[self.SQNAMESPACE_NAME]
+        else:
+            foundConstant["namespace"] = None
+
+        if "constants" not in self.foundValues:
+            self.foundValues["constants"] = []
+        self.foundValues["constants"].append(foundConstant)
 
     def parseFunctionType(self):
         line = self.getCurrentLine()
@@ -144,17 +177,19 @@ class ParsedFile:
 
         values = self.readValuesFromGroup(startLine)
 
-        if not self.SQNAMESPACE_NAME in values or not self.SQNAMESPACE_DESCRIPTION in values:
+        if not self.SQNAMESPACE_NAME in values:
             return
 
         foundNamespace = {
-            self.SQNAMESPACE_NAME:values[self.SQNAMESPACE_NAME],
-            self.SQNAMESPACE_DESCRIPTION:values[self.SQNAMESPACE_DESCRIPTION],
+            self.SQNAMESPACE_NAME:values[self.SQNAMESPACE_NAME]
         }
 
-        if "namespaces" not in self.foundValues:
-            self.foundValues["namespaces"] = []
-        self.foundValues["namespaces"].append(foundNamespace)
+        if self.SQNAMESPACE_DESCRIPTION in values:
+            foundNamespace[self.SQNAMESPACE_DESCRIPTION] = values[self.SQNAMESPACE_DESCRIPTION]
+            #Don't push if no description, just set as the current namespace
+            if "namespaces" not in self.foundValues:
+                self.foundValues["namespaces"] = []
+            self.foundValues["namespaces"].append(foundNamespace)
 
         self.currentNamespace = foundNamespace
 

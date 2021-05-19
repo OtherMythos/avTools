@@ -40,5 +40,7 @@ def main():
 
         writer = FileWriter(parser.foundData)
         writer.writeRst(dirPath)
+    else:
+        print("Error reading from path " + str(sourcePath))
 
 main()

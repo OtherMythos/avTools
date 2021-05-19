@@ -12,16 +12,38 @@ class FileWriter:
         file.write("=" * len(namespace["name"]) + "\n\n")
         file.write(namespace["desc"] + "\n\n")
 
-        file.write("API\n^^^\n")
+        self.writeFunctionText(file, namespace)
+        self.writeConstantText(file, namespace)
 
-        if not "functions" in self.foundData:
-            return
+    def writeConstantText(self, file, namespace):
+        writtenHeader = False
+        for i in self.foundData["constants"]:
+            if i["namespace"] is None:
+                continue
+            if i["namespace"] != namespace["name"]:
+                continue
+            if not writtenHeader:
+                file.write("Constants\n^^^^^^^^^\n")
+                writtenHeader = True
 
+            functionDef = "**" + i["name"] + "**"
+            if "desc" in i:
+                functionDef += " - " + i["desc"]
+            functionDef += "\n\n"
+
+            file.write(functionDef)
+
+    def writeFunctionText(self, file, namespace):
+        writtenHeader = False
         for i in self.foundData["functions"]:
             if i["namespace"] is None:
                 continue
             if i["namespace"] != namespace["name"]:
                 continue
+
+            if not writtenHeader:
+                file.write("API\n^^^\n")
+                writtenHeader = True
 
             functionDef = ".. js:function:: "
             functionDef += i["name"]
