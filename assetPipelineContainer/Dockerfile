@@ -28,5 +28,6 @@ RUN ln -s /builder/OgreMeshTool /bin/OgreMeshTool
 COPY installAddon.py /builder/installAddon.py
 RUN blender -b -P /builder/installAddon.py
 #RUN sed -i "/'OGRETOOLS_XML_CONVERTER' : 'OgreXMLConverter',/c\'OGRETOOLS_XML_CONVERTER' : '/builder/OgreMeshTool'," /builder/blender2ogre/io_ogre/config.py
+RUN sed -i "/'SWAP_AXIS' : 'xyz'/c\    'SWAP_AXIS' : 'xz-y'," /builder/blender2ogre/io_ogre/config.py
 
 ENTRYPOINT ["/builder/entrypoint.sh"]
