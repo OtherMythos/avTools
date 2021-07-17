@@ -38,6 +38,32 @@ class DirectoryScanner:
                     self.exportManager.exportBlenderFile(filePath, outputTargetDirectory);
 
     '''
+    When execution finishes, perform some final checks.
+    '''
+    def finishExecutionRun(self):
+        print("Finishing export")
+        #Check whether any xml files were left without a .mesh result
+        self.findOrphanedMeshXMLFiles(self.output)
+
+
+    def findOrphanedMeshXMLFiles(self, path):
+        print("scanning")
+        for root, subdirs, files in os.walk( str(path) ):
+            rootPath = Path(root)
+            for file in files:
+                filePath = rootPath / file
+                suffix = ''.join(filePath.suffixes)
+                if(suffix == ".mesh.xml"):
+                    #Found a mesh.xml file, now check if it has no .mesh file.
+                    #Remove the suffix
+                    targetFile = filePath.with_suffix("")
+                    print(targetFile)
+                    if targetFile.exists():
+                        continue
+                    print("Found orphan mesh.xml file: %s" % str(filePath))
+                    self.exportManager.exportOgreMeshXML(filePath, targetFile)
+
+    '''
     When it's time to write an output file from the input, check the output directory contains the correct structure, similar to the input.
     If it does not, create the appropriate directory structure.
     '''

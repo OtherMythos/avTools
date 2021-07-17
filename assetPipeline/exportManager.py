@@ -1,17 +1,21 @@
 import subprocess
 import os
 from pathlib import Path
+import shutil
 
 class ExportManager:
 
     def __init__(self, blenderPath):
         self.blenderPath = blenderPath
+        #If at any point we tried to export a blend file, some checks might be performed later.
+        self.exportedBlenderFile = False
 
         self.blenderExportFile = "../blenderExporter/exportTest.py"
 
         self.checkFiles()
 
     def checkFiles(self):
+        #TODO there's a bug here if not in a same directory as this file.
         self.blenderExportFileExists = Path(self.blenderExportFile).exists()
 
     def recursivePurgeXMLMeshes(self, targetDirectory):
@@ -24,10 +28,21 @@ class ExportManager:
                     os.remove(targetFile)
 
     def executableValid(self):
-        if not os.path.isfile(self.blenderPath):
-            return False
+        if os.path.isfile(self.blenderPath):
+            return True
+        if shutil.which(self.blenderPath) is not None:
+            return True
 
-        return True
+        return False
+
+    '''
+    Export an Ogre .mesh.xml file to a .mesh format.
+    '''
+    def exportOgreMeshXML(self, filePath, outputPath):
+        print("Exporting %s to %s" % (str(filePath), str(outputPath)))
+        devnull = open(os.devnull, 'w')
+        process = subprocess.Popen(["OgreMeshTool", "-e", "-t", "-ts", "4", "-v2", "-O", "puqs", str(filePath), str(outputPath)], stdout=devnull, stderr=devnull)
+        process.wait()
 
     '''
     Export a blender file to a specified output.
@@ -44,3 +59,5 @@ class ExportManager:
         process.wait()
         #print(process.communicate())
         devnull.close()
+
+        self.exportedBlenderFile = True

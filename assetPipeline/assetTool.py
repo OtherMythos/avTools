@@ -45,6 +45,7 @@ def main():
         return
 
     outputPath = Path(args.OutputDirectory)
+    scanner.finishExecutionRun()
     if shouldPurgeXML:
         exporter.recursivePurgeXMLMeshes(outputPath)
 
