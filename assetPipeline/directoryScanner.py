@@ -36,6 +36,9 @@ class DirectoryScanner:
                     #Blender file.
                     outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
                     self.exportManager.exportBlenderFile(filePath, outputTargetDirectory);
+                elif(filePath.suffix == ".xcf"):
+                    outputTarget = filePath.with_suffix(".png")
+                    self.exportManager.exportGimpProject(filePath, str(outputTarget));
 
     '''
     When execution finishes, perform some final checks.
