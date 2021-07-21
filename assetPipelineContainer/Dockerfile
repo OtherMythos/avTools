@@ -3,6 +3,7 @@ FROM ubuntu:20.04
 WORKDIR /builder
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY :99
 
 RUN apt-get update && apt-get install -y \
     wget \
@@ -10,7 +11,9 @@ RUN apt-get update && apt-get install -y \
     blender \
     git \
     libxt-dev \
-    libxaw7-dev
+    libxaw7-dev \
+    gimp \
+    xvfb
 
 COPY entrypoint.sh /builder/entrypoint.sh
 RUN chmod +x /builder/entrypoint.sh
