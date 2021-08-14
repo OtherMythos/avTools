@@ -60,11 +60,17 @@ class DirectoryScanner:
                     #Found a mesh.xml file, now check if it has no .mesh file.
                     #Remove the suffix
                     targetFile = filePath.with_suffix("")
-                    print(targetFile)
                     if targetFile.exists():
                         continue
                     print("Found orphan mesh.xml file: %s" % str(filePath))
                     self.exportManager.exportOgreMeshXML(filePath, targetFile)
+                elif(suffix == ".skeleton.xml"):
+                    #Same as above but with skeletons.
+                    targetFile = filePath.with_suffix("")
+                    if targetFile.exists():
+                        continue
+                    print("Found orphan skeleton.xml file: %s" % str(filePath))
+                    self.exportManager.exportOgreSkeletonXML(filePath, targetFile)
 
     '''
     When it's time to write an output file from the input, check the output directory contains the correct structure, similar to the input.

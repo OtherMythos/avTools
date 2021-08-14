@@ -44,6 +44,12 @@ class ExportManager:
         process = subprocess.Popen(["OgreMeshTool", "-e", "-t", "-ts", "4", "-v2", "-O", "puqs", str(filePath), str(outputPath)], stdout=devnull, stderr=devnull)
         process.wait()
 
+    def exportOgreSkeletonXML(self, filePath, outputPath):
+        print("Exporting %s to %s" % (str(filePath), str(outputPath)))
+        devnull = open(os.devnull, 'w')
+        process = subprocess.Popen(["OgreMeshTool", "-e", "-t", "-ts", "4", "-v2", "-O", "puqs", str(filePath), str(outputPath)], stdout=devnull, stderr=devnull)
+        process.wait()
+
     '''
     Export a blender file to a specified output.
     '''
