@@ -6,7 +6,7 @@ from exportManager import ExportManager
 from pathlib import Path
 
 def main():
-    helpText = '''A script capable of taking asset project files and producting resources which can be accepted by the avEngine.
+    helpText = '''A script capable of taking asset project files and producing resources which can be accepted by the avEngine.
     For instance, producing a .mesh file from a .blend file.
     This tool is intended to automate the procedure of creating these objects manually.
 
