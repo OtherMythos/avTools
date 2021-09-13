@@ -38,7 +38,8 @@ class ResourceMetaBase:
 
         with open(path) as file:
             data = json.load(file)
-            self.parseJsonData(data)
+            if not self.parseJsonData(data):
+                return False
 
         return True
 
