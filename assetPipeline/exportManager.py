@@ -3,6 +3,11 @@ import os
 from pathlib import Path
 import shutil
 
+'''
+Contains functions relating to the exportation of resources.
+This class contains little logic about which files to export,
+just the logic of how to export a provided path.
+'''
 class ExportManager:
 
     def __init__(self, blenderPath):

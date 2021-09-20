@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 from resourceMetaFile import *
+from resourceMetaBase import *
 
 class ParsedFileTests(unittest.TestCase):
 
@@ -67,6 +68,53 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(targetGroup["other.jpg"].heightDiv, 1)
         self.assertEqual(targetGroup["other.jpg"].ignore, False)
 
+    def test_validateMetaFileProfiles(self):
+        jsonData = '''
+        {
+            "Universal":{
+            },
+            "Something":{
+            },
+            "Desktop":{
+            }
+        }
+        '''
+        f = ResourceMetaFile()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+
+        #Parse the meta base file.
+        jsonData = '''
+        {
+            "profiles":{
+                "Universal": {"IndependantBuildable":false},
+                "Desktop": {"ChildOf":"Universal"}
+            },
+            "DefaultProfile": "Universal"
+        }
+        '''
+        baseFile = ResourceMetaBase()
+        result = baseFile.parseJsonString(jsonData)
+        self.assertTrue(result)
+
+        result = f.validateAgainstProfiles(baseFile)
+        self.assertFalse(result)
+
+        ## New data
+        jsonData = '''
+        {
+            "Universal":{
+            },
+            "Desktop":{
+            }
+        }
+        '''
+        f = ResourceMetaFile()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+
+        result = f.validateAgainstProfiles(baseFile)
+        self.assertTrue(result)
 
 if __name__ == '__main__':
     unittest.main()

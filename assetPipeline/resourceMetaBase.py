@@ -47,12 +47,15 @@ class ResourceMetaBase:
         data = json.loads(string)
         return self.parseJsonData(data)
 
-    def _containsUniversalProfile(self, profiles):
+    def containsProfile(self, name):
         for i in range(len(self.profiles)):
-            if self.profiles[i].name == "Universal":
-                return i
+            if self.profiles[i].name == name:
+                return True
 
         return None
+
+    def _containsUniversalProfile(self):
+        return self.containsProfile("Universal")
 
     def parseJsonData(self, data):
         self.profiles.clear()
@@ -74,7 +77,7 @@ class ResourceMetaBase:
                 self.profiles.append(newProfile)
 
         #Make sure the list contains a universal entry.
-        universalIndex = self._containsUniversalProfile(self.profiles)
+        universalIndex = self._containsUniversalProfile()
         if universalIndex is None:
             universalProfile = ProfileEntry()
             universalProfile.name = "Universal"

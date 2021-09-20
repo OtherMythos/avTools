@@ -66,3 +66,17 @@ class ResourceMetaFile:
 
         return parsedSettings
 
+    '''
+    Validate that the resourceMetaBase file contains the appropriate profiles to support this meta file.
+    Assumes the meta file was correctly parsed.
+    Returns true or false depending on the success.
+    '''
+    def validateAgainstProfiles(self, baseFile):
+        for i in self.parsedProfileGroups:
+            result = baseFile.containsProfile(i)
+            if result is not True:
+                print("resourceMeta file defines unknown profile %s" % i)
+                return False
+
+        return True
+

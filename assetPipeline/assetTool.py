@@ -4,6 +4,7 @@ import argparse
 from directoryScanner import DirectoryScanner
 from exportManager import ExportManager
 from pathlib import Path
+from resourceMetaBase import *
 
 def main():
     helpText = '''A script capable of taking asset project files and producing resources which can be accepted by the avEngine.
@@ -38,7 +39,16 @@ def main():
         print("Invalid path passed for blender executable.")
         return
 
-    scanner = DirectoryScanner(exporter, args.InputDirectory, args.OutputDirectory)
+    resourceMetaBase = ResourceMetaBase()
+    resBasePath = Path(args.InputDirectory) / Path("resourceMetaBase.json")
+    if resBasePath.exists() and resBasePath.is_file():
+        print("Found resBase file at path %s" % str(resBasePath))
+        resourceMetaBase.parseFile(str(resBasePath))
+    else:
+        print("Could not find resourceMetaBase.json in path %s\nResource profiles will be disabled." % str(resBasePath))
+
+
+    scanner = DirectoryScanner(exporter, resourceMetaBase, args.InputDirectory, args.OutputDirectory)
     result = scanner.scanPaths()
     if not result:
         #Something failed

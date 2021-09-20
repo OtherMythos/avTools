@@ -1,15 +1,16 @@
 from pathlib import Path
 from exportManager import ExportManager
+from resourceMetaFile import *
 
 import os
 
 class DirectoryScanner:
 
-    def __init__(self, exportManager, inputPath, outputPath):
+    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath):
         self.input = Path(inputPath)
         self.output = Path(outputPath)
-        self.exportManager = exportManager;
-        pass
+        self.exportManager = exportManager
+        self.resourceMetaBase = resourceMetaBase
 
     def scanPaths(self):
         #First check if the input directory actually exists.
@@ -30,15 +31,31 @@ class DirectoryScanner:
     def traverseInputDirectory(self, path):
         for root, subdirs, files in os.walk( str(path) ):
             rootPath = Path(root)
+            targetDirectoryResFile = rootPath / Path("resourceMeta.json")
+            currentDirMetaFile = ResourceMetaFile()
+            currentDirMetaFileValid = False
+            if targetDirectoryResFile.exists() and targetDirectoryResFile.is_file():
+                currentDirMetaFileValid = currentDirMetaFile.parseFile(str(targetDirectoryResFile))
+            else:
+                print("Could not find a valid resourceMeta.json in directory %s" % root)
+
+            if currentDirMetaFileValid:
+                print("Found resourceMeta.json at path %s" % targetDirectoryResFile)
+                result = currentDirMetaFile.validateAgainstProfiles(self.resourceMetaBase)
+                if not result:
+                    print("Skipping directory due to invalid resourceMeta file.")
+                    continue
+
+
             for file in files:
                 filePath = rootPath / file
                 if(filePath.suffix == ".blend"):
                     #Blender file.
                     outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
-                    self.exportManager.exportBlenderFile(filePath, outputTargetDirectory);
+                    self.exportManager.exportBlenderFile(filePath, outputTargetDirectory)
                 elif(filePath.suffix == ".xcf"):
                     outputTarget = filePath.with_suffix(".png")
-                    self.exportManager.exportGimpProject(filePath, str(outputTarget));
+                    self.exportManager.exportGimpProject(filePath, str(outputTarget))
 
     '''
     When execution finishes, perform some final checks.
