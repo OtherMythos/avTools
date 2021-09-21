@@ -68,6 +68,42 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(targetGroup["other.jpg"].heightDiv, 1)
         self.assertEqual(targetGroup["other.jpg"].ignore, False)
 
+        self.assertEqual(f.parsedResources["Grass.png"], "Universal")
+        self.assertEqual(f.parsedResources["Rocks.png"], "Universal")
+        self.assertEqual(f.parsedResources["other.jpg"], "Desktop")
+
+    def test_parseFileInMultipleProfiles(self):
+        jsonData = '''
+        {
+            "Universal":{
+                "Grass.png": {
+                    "outDir": "something.png"
+                },
+                "Rocks.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Desktop":{
+                "Grass.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Other":{
+                "Grass.png": {
+                    "outDir": "somethingElse.png"
+                }
+            }
+        }
+        '''
+        f = ResourceMetaFile()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+
+        self.assertEqual(len(f.parsedProfileGroups), 3)
+
+        self.assertEqual(f.parsedResources["Grass.png"], ["Universal", "Desktop", "Other"])
+        self.assertEqual(f.parsedResources["Rocks.png"], "Universal")
+
     def test_validateMetaFileProfiles(self):
         jsonData = '''
         {

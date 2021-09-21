@@ -19,6 +19,9 @@ class ProfileEntry:
         self.parent = None
         self.children = []
         self.independantBuildable = False
+        self.parentIndex = -1
+        self.id = -1
+
 
 
 '''
@@ -47,6 +50,31 @@ class ResourceMetaBase:
         data = json.loads(string)
         return self.parseJsonData(data)
 
+    def getProfileIdx(self, name):
+        for i in range(len(self.profiles)):
+            if self.profiles[i].name == name:
+                return i
+        return None
+
+    '''
+    Order the array relative to the profile order.
+    For instance a list containing ["Desktop", "Universal"] would be ordered
+    ["Universal", "Desktop"] assuming Desktop is a child of Universal.
+    '''
+    def getProfileOrderForArray(self, array):
+        #Contain all the items in the new list.
+        newList = []
+        for i in array:
+            newList.append( self.profiles[self.getProfileIdx(i)] )
+        assert(len(newList) == len(array))
+        newList.sort(key=lambda x: x.id, reverse=False)
+        retList = []
+        for i in newList:
+            retList.append(i.name)
+
+        return retList
+
+
     def containsProfile(self, name):
         for i in range(len(self.profiles)):
             if self.profiles[i].name == name:
@@ -74,6 +102,7 @@ class ResourceMetaBase:
                 if "IndependantBuildable" in curr and type(curr["IndependantBuildable"]) is bool:
                     newProfile.independantBuildable = curr["IndependantBuildable"]
 
+                newProfile.id = len(self.profiles)
                 self.profiles.append(newProfile)
 
         #Make sure the list contains a universal entry.
@@ -83,6 +112,7 @@ class ResourceMetaBase:
             universalProfile.name = "Universal"
             universalProfile.parent = None
             universalProfile.independantBuildable = True
+            newProfile.id = len(self.profiles)
             self.profiles.append(universalProfile)
 
         #Scan through all the found profiles and match up the parents with the children.
@@ -104,6 +134,21 @@ class ResourceMetaBase:
             if not found:
                 print("Could not find parent %s for profile %s" % (currentProfile.parent, currentProfile.name))
                 return False
+
+        #Loop through and determine the relative parent id for each profile.
+        #This is used later on to determine the priority different profiles have over each other.
+        for i in range(len(self.profiles)):
+            currentProfile = self.profiles[i]
+            if currentProfile.name == "Universal":
+                currentProfile.parentIndex = 0
+                continue
+            targetParent = currentProfile.parent
+            idCount = 0
+            while targetParent is not None:
+                foundProfile = self.profiles[self.getProfileIdx(targetParent)]
+                targetParent = foundProfile.parent
+                idCount+=1
+            currentProfile.parentIndex = idCount
 
 
         #Read other values

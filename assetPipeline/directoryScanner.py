@@ -48,6 +48,8 @@ class DirectoryScanner:
 
 
             for file in files:
+                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file)
+
                 filePath = rootPath / file
                 if(filePath.suffix == ".blend"):
                     #Blender file.

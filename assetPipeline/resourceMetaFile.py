@@ -23,6 +23,7 @@ class ResourceMetaFile:
 
     def __init__(self):
         self.parsedProfileGroups = {}
+        self.parsedResources = {}
 
     def parseFile(self, path):
         filePath = Path(path)
@@ -39,14 +40,54 @@ class ResourceMetaFile:
         data = json.loads(string)
         return self.parseJsonData(data)
 
+    def getProfilesForResource(self, resName):
+        if resName in self.parsedResources:
+            return self.parsedResources[resName]
+        return None
+
     def parseJsonData(self, data):
         for i in data:
             groupData = {}
             for y in data[i]:
                 groupData[y] = self.parseProfileData(data[i][y])
+                self.addProfileToParsedResource(y, i)
             self.parsedProfileGroups[i] = groupData
 
         return True
+
+    def determineResSettingsForProfile(self, profile, resource):
+        return self.parsedProfileGroups[profile][resource]
+
+    def determineResourceEntrySettings(self, baseFile, resName):
+        if not resName in self.parsedResources:
+            return ResourceEntrySettings()
+
+        targetResources = self.parsedResources[resName]
+        if type(targetResources) is str:
+            return self.determineResSettingsForProfile(targetResources, resName)
+
+        #From here on we need to process a list of resource settings.
+        assert(type(targetResources) is list)
+        returnedArray = baseFile.getProfileOrderForArray(targetResources)
+        '''
+        Go through this list. Get the settings for that object at the lowest profile.
+        Go all the way through to get the final value.
+        '''
+
+
+    '''
+    Insert settings for a parsed resource into the parsedResources map.
+    If only one profile is registered this will be stored as just a plain string.
+    If not it will be stored as an array containing multiple values.
+    '''
+    def addProfileToParsedResource(self, resName, groupName):
+        if(resName in self.parsedResources):
+            if type(self.parsedResources[resName]) is str:
+                self.parsedResources[resName] = [self.parsedResources[resName], groupName]
+            else:
+                self.parsedResources[resName].append(groupName)
+        else:
+            self.parsedResources[resName] = groupName
 
     def parseProfileData(self, data):
         parsedSettings = ResourceEntrySettings()
