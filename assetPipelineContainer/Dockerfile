@@ -25,8 +25,9 @@ RUN mkdir -p /root/.config/blender/2.82/scripts/addons
 RUN git clone https://github.com/OGRECave/blender2ogre.git /builder/blender2ogre
 RUN ln -s /builder/blender2ogre/io_ogre/ /root/.config/blender/2.82/scripts/addons
 
-COPY bin/OgreMeshTool /builder/OgreMeshTool
-RUN ln -s /builder/OgreMeshTool /bin/OgreMeshTool
+COPY bin/OgreMeshToolArm /builder/OgreMeshToolArm
+COPY bin/OgreMeshToolx86 /builder/OgreMeshToolx86
+#RUN ln -s /builder/OgreMeshTool /bin/OgreMeshTool
 
 COPY installAddon.py /builder/installAddon.py
 RUN blender -b -P /builder/installAddon.py
