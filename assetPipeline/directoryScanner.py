@@ -34,10 +34,13 @@ class DirectoryScanner:
             targetDirectoryResFile = rootPath / Path("resourceMeta.json")
             currentDirMetaFile = ResourceMetaFile()
             currentDirMetaFileValid = False
-            if targetDirectoryResFile.exists() and targetDirectoryResFile.is_file():
-                currentDirMetaFileValid = currentDirMetaFile.parseFile(str(targetDirectoryResFile))
-            else:
-                print("Could not find a valid resourceMeta.json in directory %s" % root)
+
+            if self.resourceMetaBase.valid:
+                #Only check for resourceMeta files if the meta base file is valid.
+                if targetDirectoryResFile.exists() and targetDirectoryResFile.is_file():
+                    currentDirMetaFileValid = currentDirMetaFile.parseFile(str(targetDirectoryResFile))
+                else:
+                    print("Could not find a valid resourceMeta.json in directory %s" % root)
 
             if currentDirMetaFileValid:
                 print("Found resourceMeta.json at path %s" % targetDirectoryResFile)

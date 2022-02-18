@@ -9,10 +9,10 @@ class ParsedFileTests(unittest.TestCase):
         jsonData = '''
         {
             "profiles":{
-                "Universal": {"IndependantBuildable":false},
+                "Universal": {"IndependantBuildable":true},
                 "Desktop": {"ChildOf":"Universal"}
             },
-            "DefaultProfile": "Universal"
+            "DefaultProfile": "Desktop"
         }
         '''
         f = ResourceMetaBase()
@@ -21,7 +21,7 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(len(f.profiles), 2)
 
         self.assertEqual(f.profiles[0].name, "Universal")
-        self.assertFalse(f.profiles[0].independantBuildable)
+        self.assertTrue(f.profiles[0].independantBuildable)
         self.assertIsNone(f.profiles[0].parent)
         self.assertEqual(len(f.profiles[0].children), 1)
         self.assertEqual(f.profiles[0].children[0], "Desktop")
@@ -36,7 +36,7 @@ class ParsedFileTests(unittest.TestCase):
         jsonData = '''
         {
             "profiles":{
-                "Universal": {"IndependantBuildable":false},
+                "Universal": {"IndependantBuildable":true},
                 "Desktop": {"ChildOf":"Universal"},
                 "Linux": {"ChildOf":"Desktop"},
                 "MacOS": {"ChildOf":"Desktop"},
@@ -123,6 +123,18 @@ class ParsedFileTests(unittest.TestCase):
         result = f.getProfileOrderForArray(["FirstChild", "SecondChild", "Linux", "Desktop", "Universal"])
         self.assertEqual(result, ["Universal", "Desktop", "Linux", "FirstChild", "SecondChild"])
 
+    def test_defaultProfileMustBeIndependantlyBuildable(self):
+        jsonData = '''
+        {
+            "profiles":{
+                "Universal": {"IndependantBuildable":false}
+            },
+            "DefaultProfile": "Universal"
+        }
+        '''
+        f = ResourceMetaBase()
+        result = f.parseJsonString(jsonData)
+        self.assertFalse(result)
 
 if __name__ == '__main__':
     unittest.main()

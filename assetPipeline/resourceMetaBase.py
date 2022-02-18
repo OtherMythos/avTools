@@ -18,7 +18,7 @@ class ProfileEntry:
         self.name = ""
         self.parent = None
         self.children = []
-        self.independantBuildable = False
+        self.independantBuildable = True
         self.parentIndex = -1
         self.id = -1
 
@@ -31,6 +31,7 @@ This is a file type which contains base information about the resources to be pa
 class ResourceMetaBase:
 
     def __init__(self):
+        self.valid = False;
         self.profiles = []
         self.defaultProfile = "Universal"
 
@@ -44,11 +45,28 @@ class ResourceMetaBase:
             if not self.parseJsonData(data):
                 return False
 
-        return True
+        return self._processParsedJSON()
 
     def parseJsonString(self, string):
         data = json.loads(string)
-        return self.parseJsonData(data)
+        successValue = self.parseJsonData(data)
+        if not successValue:
+            return False
+
+        if not self._processParsedJSON():
+            return False
+
+        return True
+
+    def _processParsedJSON(self):
+        #Validate the values.
+        defaultValid = self.isDefaultProfileValid()
+        if defaultValid is False:
+            print("The default profile (%s) is not valid" % self.defaultProfile)
+            return False
+
+        self.valid = True;
+        return True
 
     def getProfileIdx(self, name):
         for i in range(len(self.profiles)):
@@ -76,14 +94,21 @@ class ResourceMetaBase:
 
 
     def containsProfile(self, name):
-        for i in range(len(self.profiles)):
-            if self.profiles[i].name == name:
-                return True
-
-        return None
+        idx = self.getProfileIdx(name);
+        return idx is not None
 
     def _containsUniversalProfile(self):
         return self.containsProfile("Universal")
+
+    def isDefaultProfileValid(self):
+        idx = self.getProfileIdx(self.defaultProfile);
+        if idx == None:
+            return False
+        prof = self.profiles[idx]
+        if not prof.independantBuildable:
+            return False
+
+        return True
 
     def parseJsonData(self, data):
         self.profiles.clear()
@@ -107,7 +132,7 @@ class ResourceMetaBase:
 
         #Make sure the list contains a universal entry.
         universalIndex = self._containsUniversalProfile()
-        if universalIndex is None:
+        if universalIndex is False:
             universalProfile = ProfileEntry()
             universalProfile.name = "Universal"
             universalProfile.parent = None

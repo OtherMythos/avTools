@@ -43,7 +43,9 @@ def main():
     resBasePath = Path(args.InputDirectory) / Path("resourceMetaBase.json")
     if resBasePath.exists() and resBasePath.is_file():
         print("Found resBase file at path %s" % str(resBasePath))
-        resourceMetaBase.parseFile(str(resBasePath))
+        result = resourceMetaBase.parseFile(str(resBasePath))
+        if not result:
+            print("Error when parsing resourceMetaBase.json\nResource profiles will be disabled.")
     else:
         print("Could not find resourceMetaBase.json in path %s\nResource profiles will be disabled." % str(resBasePath))
 
