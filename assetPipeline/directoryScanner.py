@@ -60,8 +60,12 @@ class DirectoryScanner:
 
                 #TODO plug in the proper target profile to build here.
                 resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, "Universal")
-
                 filePath = rootPath / file
+
+                if resSettings.ignore:
+                    print("ignoring %s" % filePath)
+                    continue
+
                 if(filePath.suffix in self.blacklistSuffixes):
                     print("skipping %s" % filePath)
                     continue
@@ -74,8 +78,12 @@ class DirectoryScanner:
                     outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
                     self.exportManager.exportGimpProject(filePath, str(outputTarget))
                 else:
+                    #TODO implement width, height, widthDiv, heightDiv
+                    outPath = filePath
+                    if resSettings.outDir != "":
+                        outPath = rootPath / resSettings.outDir
                     #Copy the file over.
-                    outputTarget = self.prepareOutputDirectoryForFile(filePath, True)
+                    outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
                     shutil.copyfile(filePath, outputTarget)
                     print("copied %s to %s" % (filePath, outputTarget))
 
