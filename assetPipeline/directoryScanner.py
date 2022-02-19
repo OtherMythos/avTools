@@ -1,6 +1,7 @@
 from pathlib import Path
 from exportManager import ExportManager
 from resourceMetaFile import *
+import shutil
 
 import os
 
@@ -11,6 +12,9 @@ class DirectoryScanner:
         self.output = Path(outputPath)
         self.exportManager = exportManager
         self.resourceMetaBase = resourceMetaBase
+
+        self.blacklistSuffixes = [".blend1", ".swp"]
+        self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json"]
 
     def scanPaths(self):
         #First check if the input directory actually exists.
@@ -51,17 +55,30 @@ class DirectoryScanner:
 
 
             for file in files:
+                if file in self.blacklistFiles:
+                    continue
+
                 #TODO plug in the proper target profile to build here.
                 resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, "Universal")
 
                 filePath = rootPath / file
-                if(filePath.suffix == ".blend"):
+                if(filePath.suffix in self.blacklistSuffixes):
+                    print("skipping %s" % filePath)
+                    continue
+                elif(filePath.suffix == ".blend"):
                     #Blender file.
                     outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
                     self.exportManager.exportBlenderFile(filePath, outputTargetDirectory)
                 elif(filePath.suffix == ".xcf"):
-                    outputTarget = filePath.with_suffix(".png")
+                    retPath = filePath.with_suffix(".png")
+                    outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
                     self.exportManager.exportGimpProject(filePath, str(outputTarget))
+                else:
+                    #Copy the file over.
+                    outputTarget = self.prepareOutputDirectoryForFile(filePath, True)
+                    shutil.copyfile(filePath, outputTarget)
+                    print("copied %s to %s" % (filePath, outputTarget))
+
 
     '''
     When execution finishes, perform some final checks.
@@ -99,7 +116,7 @@ class DirectoryScanner:
     When it's time to write an output file from the input, check the output directory contains the correct structure, similar to the input.
     If it does not, create the appropriate directory structure.
     '''
-    def prepareOutputDirectoryForFile(self, inputFilePath):
+    def prepareOutputDirectoryForFile(self, inputFilePath, includeFileName = False):
         relativePath = inputFilePath.relative_to(self.input)
         outputTargetPath = self.output / relativePath
 
@@ -107,5 +124,8 @@ class DirectoryScanner:
         parentPath = outputTargetPath.parents[0]
         if not parentPath.exists():
             parentPath.mkdir(parents=True)
+
+        if includeFileName:
+            parentPath = parentPath / inputFilePath.name
 
         return parentPath
