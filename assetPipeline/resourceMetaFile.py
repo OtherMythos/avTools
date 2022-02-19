@@ -15,6 +15,23 @@ class ResourceEntrySettings:
         self.heightDiv = 1
         self.ignore = False
 
+    '''
+    Apply the settings of a ResourceEntry to this one.
+    '''
+    def applySettings(self, target):
+        if target.outDir != "":
+            self.outDir = target.outDir
+        if target.width != None:
+            self.width = target.width
+        if target.height != None:
+            self.height = target.height
+        if target.widthDiv != 1:
+            self.widthDiv = target.widthDiv
+        if target.heightDiv != 1:
+            self.heightDiv = target.heightDiv
+        if target.ignore != False:
+            self.ignore = target.ignore
+
 '''
 Defines data per directory for resources.
 This data can be specified by profile, allowing greater control over the outputted resources.
@@ -58,7 +75,7 @@ class ResourceMetaFile:
     def determineResSettingsForProfile(self, profile, resource):
         return self.parsedProfileGroups[profile][resource]
 
-    def determineResourceEntrySettings(self, baseFile, resName):
+    def determineResourceEntrySettings(self, baseFile, resName, targetProfile):
         if not resName in self.parsedResources:
             return ResourceEntrySettings()
 
@@ -69,11 +86,26 @@ class ResourceMetaFile:
         #From here on we need to process a list of resource settings.
         assert(type(targetResources) is list)
         returnedArray = baseFile.getProfileOrderForArray(targetResources)
+        if returnedArray is None:
+            return ResourceEntrySettings()
         '''
         Go through this list. Get the settings for that object at the lowest profile.
         Go all the way through to get the final value.
         '''
+        assert len(returnedArray) > 0
+        print(self.parsedProfileGroups)
+        newReturnSettings = ResourceEntrySettings()
+        for i in returnedArray:
+            assert i in self.parsedProfileGroups
+            targetGroup = self.parsedProfileGroups[i]
+            assert resName in targetGroup
+            targetResourceSettings = targetGroup[resName]
+            newReturnSettings.applySettings(targetResourceSettings)
+            if targetProfile == i:
+                #Stop building from here
+                break
 
+        return newReturnSettings
 
     '''
     Insert settings for a parsed resource into the parsedResources map.

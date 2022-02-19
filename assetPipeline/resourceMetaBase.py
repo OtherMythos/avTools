@@ -83,8 +83,14 @@ class ResourceMetaBase:
         #Contain all the items in the new list.
         newList = []
         for i in array:
-            newList.append( self.profiles[self.getProfileIdx(i)] )
-        assert(len(newList) == len(array))
+            profileIdx = self.getProfileIdx(i)
+            if profileIdx is None:
+                continue
+            newList.append( self.profiles[profileIdx] )
+        #Check the profiles requested actually exist.
+        if len(newList) != len(array):
+            return None
+
         newList.sort(key=lambda x: x.id, reverse=False)
         retList = []
         for i in newList:

@@ -51,7 +51,8 @@ class DirectoryScanner:
 
 
             for file in files:
-                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file)
+                #TODO plug in the proper target profile to build here.
+                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, "Universal")
 
                 filePath = rootPath / file
                 if(filePath.suffix == ".blend"):

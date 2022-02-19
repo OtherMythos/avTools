@@ -104,6 +104,143 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(f.parsedResources["Grass.png"], ["Universal", "Desktop", "Other"])
         self.assertEqual(f.parsedResources["Rocks.png"], "Universal")
 
+    def test_determineResourceEntrySettings_failsWithMissingProfile(self):
+        #Mentions profile other which doesn't exist.
+        jsonData = '''
+        {
+            "Universal":{
+                "Grass.png": {
+                    "outDir": "something.png"
+                },
+                "Rocks.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Desktop":{
+                "Grass.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Other":{
+                "Grass.png": {
+                    "outDir": "somethingElse.png"
+                }
+            }
+        }
+        '''
+        f = ResourceMetaFile()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+        #Parse the meta base.
+        jsonData = '''
+        {
+            "profiles":{
+            "Universal": {"IndependantBuildable":true}
+        },
+        "DefaultProfile": "Universal"
+        }
+        '''
+        b = ResourceMetaBase()
+        result = b.parseJsonString(jsonData)
+
+    def test_determineResourceEntrySettings(self):
+        jsonData = '''
+        {
+            "Universal":{
+                "Grass.png": {
+                    "outDir": "something.png"
+                },
+                "Rocks.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Desktop":{
+                "Grass.png": {
+                    "outDir": "somethingElse.png"
+                }
+            },
+            "Other":{
+                "Grass.png": {
+                    "outDir": "somethingOther.png",
+                    "width": 2,
+                    "height": 3,
+                    "widthDiv": 4,
+                    "heightDiv": 5,
+                    "ignore": true
+                }
+            },
+            "Inherits":{
+                "Grass.png": {
+                    "outDir": "inherited.png"
+                }
+            }
+        }
+        '''
+
+        f = ResourceMetaFile()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+        #Parse the meta base.
+        jsonData = '''
+        {
+            "profiles":{
+            "Universal": {"IndependantBuildable":true},
+            "Desktop": {"ChildOf":"Universal"},
+            "Linux": {"ChildOf":"Desktop"},
+            "Other": {"ChildOf":"Linux"},
+            "Inherits": {"ChildOf":"Other"},
+            "MacOS": {"ChildOf":"Desktop"},
+            "Windows": {"ChildOf":"Linux"},
+            "SomethingElse": {"ChildOf":"Windows"}
+        },
+        "DefaultProfile": "Universal"
+        }
+        '''
+        b = ResourceMetaBase()
+        result = b.parseJsonString(jsonData)
+
+        settings = f.determineResourceEntrySettings(b, "Grass.png", "Desktop")
+        self.assertEqual(settings.outDir, "somethingElse.png")
+        self.assertEqual(settings.width, None)
+        self.assertEqual(settings.height, None)
+        self.assertEqual(settings.widthDiv, 1)
+        self.assertEqual(settings.heightDiv, 1)
+        self.assertEqual(settings.ignore, False)
+
+        settings = f.determineResourceEntrySettings(b, "Grass.png", "Other")
+        self.assertEqual(settings.outDir, "somethingOther.png")
+        self.assertEqual(settings.width, 2)
+        self.assertEqual(settings.height, 3)
+        self.assertEqual(settings.widthDiv, 4)
+        self.assertEqual(settings.heightDiv, 5)
+        self.assertEqual(settings.ignore, True)
+
+        #Here values should be inherited from the previous set.
+        settings = f.determineResourceEntrySettings(b, "Grass.png", "Inherits")
+        self.assertEqual(settings.outDir, "inherited.png")
+        self.assertEqual(settings.width, 2)
+        self.assertEqual(settings.height, 3)
+        self.assertEqual(settings.widthDiv, 4)
+        self.assertEqual(settings.heightDiv, 5)
+        self.assertEqual(settings.ignore, True)
+
+        settings = f.determineResourceEntrySettings(b, "Grass.png", "Universal")
+        self.assertEqual(settings.outDir, "something.png")
+        self.assertEqual(settings.width, None)
+        self.assertEqual(settings.height, None)
+        self.assertEqual(settings.widthDiv, 1)
+        self.assertEqual(settings.heightDiv, 1)
+        self.assertEqual(settings.ignore, False)
+
+        settings = f.determineResourceEntrySettings(b, "Rocks.png", "Universal")
+        self.assertEqual(settings.outDir, "somethingElse.png")
+        self.assertEqual(settings.width, None)
+        self.assertEqual(settings.height, None)
+        self.assertEqual(settings.widthDiv, 1)
+        self.assertEqual(settings.heightDiv, 1)
+        self.assertEqual(settings.ignore, False)
+
+
     def test_validateMetaFileProfiles(self):
         jsonData = '''
         {
@@ -126,7 +263,7 @@ class ParsedFileTests(unittest.TestCase):
                 "Universal": {"IndependantBuildable":false},
                 "Desktop": {"ChildOf":"Universal"}
             },
-            "DefaultProfile": "Universal"
+            "DefaultProfile": "Desktop"
         }
         '''
         baseFile = ResourceMetaBase()
