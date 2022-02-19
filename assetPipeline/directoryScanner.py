@@ -30,7 +30,7 @@ class DirectoryScanner:
 
         return True
 
-    def determinTargetProfile(self):
+    def determineTargetProfile(self):
         if self.targetProfile is not None:
             return self.targetProfile
 
