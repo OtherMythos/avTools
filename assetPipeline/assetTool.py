@@ -20,7 +20,8 @@ def main():
     parser.add_argument('InputDirectory', metavar='I', type=str, nargs='?', help='A path to the input directory.', default=None)
     parser.add_argument('OutputDirectory', metavar='O', type=str, nargs='?', help='A path to the output directory.', default=None)
 
-    parser.add_argument("-p", "--purge", help="Purge XML files produced from blender export", default=True, type=bool, nargs='?')
+    parser.add_argument("-c", "--clean", help="Clean the output directory.", default=True, type=bool, nargs='?')
+    parser.add_argument("-p", "--profile", help="Target profile to use during export", default=None)
 
     parser.add_argument("-b", "--blender", help="The path to a blender executable.", default="blender")
     args = parser.parse_args()
@@ -31,7 +32,7 @@ def main():
 
 
     shouldPurgeXML = False
-    if args.purge is None:
+    if args.clean is None:
         shouldPurgeXML = True
 
     exporter = ExportManager(args.blender)
@@ -50,7 +51,7 @@ def main():
         print("Could not find resourceMetaBase.json in path %s\nResource profiles will be disabled." % str(resBasePath))
 
 
-    scanner = DirectoryScanner(exporter, resourceMetaBase, args.InputDirectory, args.OutputDirectory)
+    scanner = DirectoryScanner(exporter, resourceMetaBase, args.InputDirectory, args.OutputDirectory, args.profile)
     result = scanner.scanPaths()
     if not result:
         #Something failed

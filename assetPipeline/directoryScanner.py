@@ -7,11 +7,12 @@ import os
 
 class DirectoryScanner:
 
-    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath):
+    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath, targetProfile):
         self.input = Path(inputPath)
         self.output = Path(outputPath)
         self.exportManager = exportManager
         self.resourceMetaBase = resourceMetaBase
+        self.targetProfile = targetProfile
 
         self.blacklistSuffixes = [".blend1", ".swp"]
         self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json"]
@@ -29,10 +30,18 @@ class DirectoryScanner:
 
         return True
 
+    def determinTargetProfile(self):
+        if self.targetProfile is not None:
+            return self.targetProfile
+
+        return self.resourceMetaBase.defaultProfile
+
     '''
     Traverse the input directory for files to convert.
     '''
     def traverseInputDirectory(self, path):
+        targetProfile = self.determineTargetProfile()
+
         for root, subdirs, files in os.walk( str(path) ):
             rootPath = Path(root)
             targetDirectoryResFile = rootPath / Path("resourceMeta.json")
@@ -58,8 +67,7 @@ class DirectoryScanner:
                 if file in self.blacklistFiles:
                     continue
 
-                #TODO plug in the proper target profile to build here.
-                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, "Universal")
+                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, targetProfile)
                 filePath = rootPath / file
 
                 if resSettings.ignore:
