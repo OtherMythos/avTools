@@ -112,7 +112,7 @@ class DirectoryScanner:
             for file in files:
                 filePath = rootPath / file
                 suffix = ''.join(filePath.suffixes)
-                if(suffix == ".mesh.xml"):
+                if(".mesh.xml" in suffix):
                     #Found a mesh.xml file, now check if it has no .mesh file.
                     #Remove the suffix
                     targetFile = filePath.with_suffix("")
