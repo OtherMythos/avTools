@@ -12,8 +12,11 @@ def processCollection(idx, parent, col):
 
         meshName = ob.data.name + ".mesh"
         meshElem = ET.SubElement(elem, "mesh", name=ob.name, mesh=meshName)
-        posElem = ET.SubElement(meshElem, "position", x=str(ob.location[0]), y=str(ob.location[2]), z=str(ob.location[1]))
+        posElem = ET.SubElement(meshElem, "position", x=str(ob.location[0]), y=str(ob.location[2]), z=str(-ob.location[1]))
         scaleElem = ET.SubElement(meshElem, "scale", x=str(ob.scale[0]), y=str(ob.scale[2]), z=str(ob.scale[1]))
+        ob.rotation_mode = 'QUATERNION'
+        #0(w) goes first, z(3) and y(2) are flipped.
+        quaternionElem = ET.SubElement(meshElem, "orientation", x=str(ob.rotation_quaternion[1]), y=str(ob.rotation_quaternion[3]), z=str(-(ob.rotation_quaternion[2])), w=str(ob.rotation_quaternion[0]))
         #TODO export orientation
 
     for ob in col.children:
