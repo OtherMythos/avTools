@@ -4,7 +4,7 @@ import sys
 import xml.etree.cElementTree as ET
 
 def processCollection(idx, parent, col):
-    elem = ET.SubElement(parent, "node")
+    elem = ET.SubElement(parent, "empty")
 
     for ob in col.objects:
         if ob.type != 'MESH':
