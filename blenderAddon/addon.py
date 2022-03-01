@@ -7,6 +7,13 @@ bl_info = {
 import bpy
 import subprocess
 import os
+from pathlib import Path
+import json
+import shutil
+
+from io_ogre.ogre.mesh import dot_mesh
+from io_ogre.ogre.skeleton import dot_skeleton
+
 
 av_plugin_config = {
     "engine_path": "/Users/edward/Documents/avEngine/build/Debug/av.app/Contents/MacOS/av",
@@ -50,13 +57,67 @@ class avEngineViewInEngine(bpy.types.Operator):
     bl_label = "View in engine"
     bl_options = {'REGISTER'}
 
+    def getTemporaryDir(self):
+        #For unix alone.
+        start = "/tmp"
+        targetPath = Path(start) / Path("avEngineBlender")
+        if(targetPath.exists()):
+            try:
+                shutil.rmtree(targetPath)
+            except OSError as e:
+                print("Error: %s - %s." % (e.filename, e.strerror))
+
+        targetPath.mkdir(parents=True)
+        return targetPath
+
+    def createAvSetupFile(self, basePath, targetMesh):
+        targetPath = basePath / Path("avSetupAddition.cfg")
+        data = {
+            'OgreResources':{
+                'General': [
+                    ['FileSystem', '/tmp/avEngineBlender']
+                ]
+            },
+            'UserSettings':{
+                'StartMesh': targetMesh
+            }
+        }
+
+        json_string = json.dumps(data)
+
+        with open(str(targetPath), 'w') as outfile:
+            outfile.write(json_string)
+
+        return targetPath
+
+    def exportMeshes(self, tempDir):
+        firstMesh = None
+        for ob in bpy.context.selected_objects:
+            if ob.type != 'MESH':
+                continue
+            meshName = ob.data.name + ".mesh"
+
+            dot_mesh(ob, tempDir)
+            dot_skeleton(ob, tempDir / (ob.data.name + ".skeleton"))
+
+            if firstMesh is None:
+                firstMesh = meshName
+
+        return firstMesh
+
     def viewingInEngine(self):
         print("Viewing single object in engine.")
+
+        #Generate avSetup file.
+        tempDir = self.getTemporaryDir()
+        firstMesh = self.exportMeshes(tempDir)
+
+        createdSetupFile = self.createAvSetupFile(tempDir, firstMesh)
 
         devnull = open(os.devnull, 'w')
         pathToEngineExecutable = av_plugin_config["engine_path"]
         pathToMaterialEditor = av_plugin_config["material_editor_av_setup"]
-        process = subprocess.Popen([pathToEngineExecutable, pathToMaterialEditor], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen([pathToEngineExecutable, pathToMaterialEditor, createdSetupFile], stdout=devnull, stderr=devnull)
         devnull.close()
 
 
