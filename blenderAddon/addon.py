@@ -70,7 +70,7 @@ class avEngineViewInEngine(bpy.types.Operator):
         targetPath.mkdir(parents=True)
         return targetPath
 
-    def createAvSetupFile(self, basePath, targetMesh):
+    def createAvSetupFile(self, basePath, targetMesh, targetMaterialFile):
         targetPath = basePath / Path("avSetupAddition.cfg")
         data = {
             'OgreResources':{
@@ -79,7 +79,8 @@ class avEngineViewInEngine(bpy.types.Operator):
                 ]
             },
             'UserSettings':{
-                'StartMesh': targetMesh
+                'StartMesh': targetMesh,
+                'StartFile': targetMaterialFile
             }
         }
 
@@ -90,18 +91,36 @@ class avEngineViewInEngine(bpy.types.Operator):
 
         return targetPath
 
+    def getProjectMaterialFile(self):
+        #if not saved make it save to /tmp and alert the user to that.
+        if bpy.context.blend_data.filepath == '':
+            return '/tmp'
+        return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".material.json"
+
     def exportMeshes(self, tempDir):
+        materialData = {
+            "pbs":{
+            }
+        }
+
         firstMesh = None
         for ob in bpy.context.selected_objects:
             if ob.type != 'MESH':
                 continue
             meshName = ob.data.name + ".mesh"
 
+            for mat in ob.material_slots:
+                materialData["pbs"][mat.name] = { }
+
             dot_mesh(ob, tempDir)
             dot_skeleton(ob, tempDir / (ob.data.name + ".skeleton"))
 
             if firstMesh is None:
                 firstMesh = meshName
+
+        json_string = json.dumps(materialData)
+        with open(tempDir / self.getProjectMaterialFile(), 'w') as outfile:
+            outfile.write(json_string)
 
         return firstMesh
 
@@ -112,7 +131,7 @@ class avEngineViewInEngine(bpy.types.Operator):
         tempDir = self.getTemporaryDir()
         firstMesh = self.exportMeshes(tempDir)
 
-        createdSetupFile = self.createAvSetupFile(tempDir, firstMesh)
+        createdSetupFile = self.createAvSetupFile(tempDir, firstMesh, str(tempDir / self.getProjectMaterialFile()))
 
         devnull = open(os.devnull, 'w')
         pathToEngineExecutable = av_plugin_config["engine_path"]
