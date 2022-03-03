@@ -94,8 +94,30 @@ class avEngineViewInEngine(bpy.types.Operator):
     def getProjectMaterialFile(self):
         #if not saved make it save to /tmp and alert the user to that.
         if bpy.context.blend_data.filepath == '':
-            return '/tmp'
+            return '/tmp/material.material.json'
         return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".material.json"
+
+    '''
+    Parse the json data of a material file which already exists, trying to insert the missing values from inputData.
+    This is used to make sure the extension doesn't destroy any material settings which already exist in a material file, while also being able to add new data.
+    '''
+    def determineSharedMaterialData(self, inputData, targetPath):
+        path = Path(targetPath)
+        if not path.exists() or not path.is_file():
+            #The file does not exist so no need to change the data.
+            return inputData
+
+        readData = None
+        with open(path, 'r') as outfile:
+            readData = json.load(outfile)
+
+        if "pbs" in readData:
+            #Go through the provided list, checking if those values are present in it.
+            for i in inputData["pbs"]:
+                if not i in readData["pbs"]:
+                    readData["pbs"][i] = inputData["pbs"][i]
+
+        return readData
 
     def exportMeshes(self, tempDir):
         materialData = {
@@ -118,8 +140,11 @@ class avEngineViewInEngine(bpy.types.Operator):
             if firstMesh is None:
                 firstMesh = meshName
 
-        json_string = json.dumps(materialData)
-        with open(tempDir / self.getProjectMaterialFile(), 'w') as outfile:
+        outMaterialFilePath = self.getProjectMaterialFile()
+        processedMaterialData = self.determineSharedMaterialData(materialData, outMaterialFilePath)
+        json_string = json.dumps(processedMaterialData)
+
+        with open(outMaterialFilePath, 'w') as outfile:
             outfile.write(json_string)
 
         return firstMesh
