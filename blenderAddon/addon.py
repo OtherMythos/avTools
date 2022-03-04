@@ -51,12 +51,7 @@ class avEngineBlenderAddonPreferences(bpy.types.AddonPreferences):
         layout.prop(self, _CONFIG_TAGS_[0])
         layout.prop(self, _CONFIG_TAGS_[1])
 
-class avEngineViewInEngine(bpy.types.Operator):
-    """View in avEngine"""
-    bl_idname = "avengine.view_in_engine"
-    bl_label = "View in engine"
-    bl_options = {'REGISTER'}
-
+class avEngineExportBase(bpy.types.Operator):
     def getTemporaryDir(self):
         #For unix alone.
         start = "/tmp"
@@ -164,6 +159,12 @@ class avEngineViewInEngine(bpy.types.Operator):
         process = subprocess.Popen([pathToEngineExecutable, pathToMaterialEditor, createdSetupFile], stdout=devnull, stderr=devnull)
         devnull.close()
 
+
+class avEngineViewInEngine(avEngineExportBase):
+    """View in avEngine"""
+    bl_idname = "avengine.view_in_engine"
+    bl_label = "View in engine"
+    bl_options = {'REGISTER'}
 
     def execute(self, context):
         scene = context.scene
