@@ -237,12 +237,42 @@ class avEngineViewInProject(avEngineExportBase):
 
         return {'FINISHED'}
 
+
+class avEngineCreateSubstancePainterProject(avEngineExportBase):
+    """Export the mesh and create a substance painter project from it."""
+    bl_idname = "avengine.view_in_substance_painter"
+    bl_label = "View in substance painter"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def viewInSubstancePainter(self):
+        tempDir = self.getTemporaryDir()
+        fileName = tempDir / "targetMesh.obj"
+
+        bpy.ops.export_scene.obj(filepath=str(fileName))
+
+        projDir = tempDir / "substanceProj"
+
+        devnull = open(os.devnull, 'w')
+        process = subprocess.Popen(["/Applications/Adobe Substance 3D Painter/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter", "--mesh", str(fileName), str(projDir)], stdout=devnull, stderr=devnull)
+        devnull.close()
+
+    def execute(self, context):
+        scene = context.scene
+        self.viewInSubstancePainter()
+
+        return {'FINISHED'}
+
 class VIEW3D_MT_menu(bpy.types.Menu):
     bl_label = "avEngine"
 
     def draw(self, context):
         self.layout.operator(avEngineViewInEngine.bl_idname)
         self.layout.operator(avEngineViewInProject.bl_idname)
+        self.layout.operator(avEngineCreateSubstancePainterProject.bl_idname)
 
 def addmenu_callback(self, context):
     self.layout.menu("VIEW3D_MT_menu")
@@ -254,6 +284,7 @@ def add_preview_button(self, context):
 def register():
     bpy.utils.register_class(avEngineViewInEngine)
     bpy.utils.register_class(avEngineViewInProject)
+    bpy.utils.register_class(avEngineCreateSubstancePainterProject)
     bpy.utils.register_class(VIEW3D_MT_menu)
     bpy.utils.register_class(avEngineBlenderAddonPreferences)
 
@@ -265,6 +296,7 @@ def unregister():
     bpy.utils.unregister_class(avEngineViewInEngine)
     bpy.utils.unregister_class(avEngineBlenderAddonPreferences)
     bpy.utils.unregister_class(avEngineViewInProject)
+    bpy.utils.unregister_class(avEngineCreateSubstancePainterProject)
 
     bpy.types.VIEW3D_HT_header.remove(addmenu_callback)
     bpy.utils.unregister_class(VIEW3D_MT_menu)
