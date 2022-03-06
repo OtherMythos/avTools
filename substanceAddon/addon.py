@@ -8,6 +8,7 @@ import substance_painter.textureset
 
 from pathlib import Path
 import json
+import subprocess
 
 # PySide module to build custom UI
 from PySide2 import QtWidgets
@@ -16,7 +17,44 @@ from PySide2 import QtWidgets
 plugin_widgets = []
 
 
-def export_textures() :
+def getExpectedMaterialFilePath():
+    rootPath = Path(substance_painter.project.file_path()).parent
+    projectName = Path(substance_painter.project.file_path()).stem
+    jsonPath = rootPath / (projectName + ".material.json")
+    return jsonPath
+
+def openEngineWithArgs(setupArgs):
+    enginePath = "/Users/edward/Documents/avEngine/build/Debug/av.app/Contents/MacOS/av"
+    args = [enginePath]
+    args.extend(setupArgs)
+
+    devnull = open(os.devnull, 'w')
+    process = subprocess.Popen(args, stdout=devnull, stderr=devnull)
+    devnull.close()
+
+
+def createAvSetupFile(basePath, targetMesh, targetMaterialFile):
+    targetPath = basePath / Path("avSetupAddition.cfg")
+    data = {
+        'OgreResources':{
+            'General': [
+                ['FileSystem', str(basePath)]
+            ]
+        },
+        'UserSettings':{
+            'StartMesh': str(targetMesh) + ".mesh",
+            'StartFile': str(targetMaterialFile)
+        }
+    }
+
+    json_string = json.dumps(data)
+
+    with open(str(targetPath), 'w') as outfile:
+        outfile.write(json_string)
+
+    return targetPath
+
+def exportTextures() :
     # Verify if a project is open before trying to export something
     if not substance_painter.project.is_open() :
         return
@@ -64,29 +102,28 @@ def export_textures() :
 
 
     #write the json data.
-    jsonPath = Path(targetPath) / "project.material.json"
+    jsonPath = getExpectedMaterialFilePath()
 
     projectName = Path(substance_painter.project.file_path()).stem
-    print(projectName + ".material.json")
 
     data = {
         "pbs": {
             projectName: {
                 "workflow": "metallic",
                 "normal": {
-                    "texture": "targetMesh_None_Normal.png"
+                    "texture": str(projectName) + "_Normal.png"
                 },
                 "diffuse": {
-                    "texture": "targetMesh_None_AlbedoTransparency.png"
+                    "texture": str(projectName) + "_AlbedoTransparency.png"
                 },
                 "metallness": {
-                    "texture": "targetMesh_None_Metalic.png"
+                    "texture": str(projectName) + "_Metalic.png"
                 },
                 "specular": {
-                    "texture": "targetMesh_None_Metalic.png"
+                    "texture": str(projectName) + "_Metalic.png"
                 },
                 "roughness": {
-                    "texture": "targetMesh_None_Roughness.png"
+                    "texture": str(projectName) + "_Roughness.png"
                 }
             }
         }
@@ -98,19 +135,33 @@ def export_textures() :
     with open(str(jsonPath), 'w') as outfile:
         outfile.write(json_string)
 
+def viewInEngine():
+    #Export the latest textures so the engine reflects what's on screen.
+    exportTextures()
 
+    projectDir = Path(substance_painter.project.file_path()).parent
+    projectName = Path(substance_painter.project.file_path()).stem
+    materialName = getExpectedMaterialFilePath()
+
+    setupFilePath = createAvSetupFile(projectDir, projectName, materialName)
+    openEngineWithArgs(["/Users/edward/Documents/materialEditor/avSetup.cfg", str(setupFilePath)])
 
 def start_plugin():
     # Create a text widget for a menu
-    Action = QtWidgets.QAction("avEngine export", triggered=export_textures)
+    Action = QtWidgets.QAction("avEngine export", triggered=exportTextures)
+    ActionViewInEngine = QtWidgets.QAction("View in avEngine", triggered=viewInEngine)
 
     # Add this widget to the existing File menu of the application
     substance_painter.ui.add_action(
         substance_painter.ui.ApplicationMenu.File,
         Action )
+    substance_painter.ui.add_action(
+        substance_painter.ui.ApplicationMenu.File,
+        ActionViewInEngine)
 
     # Store the widget for proper cleanup later when stopping the plugin
     plugin_widgets.append(Action)
+    plugin_widgets.append(ActionViewInEngine)
 
 
 def close_plugin():
