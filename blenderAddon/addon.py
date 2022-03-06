@@ -248,16 +248,58 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
     def poll(cls, context):
         return True
 
+    def createSubstanceDir(self, meshName):
+        if bpy.context.blend_data.filepath == '':
+            raise Exception("Save project before viewing in substance painter.")
+
+        projName = Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem
+        parentPath = Path(bpy.context.blend_data.filepath).parent
+        substanceName = "__substance_" + str(projName) + "_" + meshName
+
+        targetPath = parentPath / substanceName
+        if targetPath.exists():
+            raise Exception("Substance directory already exists %s" % str(targetPath))
+
+        targetPath.mkdir(parents=True)
+        return targetPath
+
+    def getSelectedMeshName(self):
+        retVal = None
+        #Just take the first of the selected meshes.
+        for ob in bpy.context.selected_objects:
+            retVal = ob.data.name
+            break
+
+        return retVal
+
+    def exportSingleOgreMesh(self, targetDir):
+        for ob in bpy.context.selected_objects:
+            if ob.type != 'MESH':
+                continue
+            #meshName = ob.data.name + ".mesh"
+
+            dot_mesh(ob, targetDir)
+            dot_skeleton(ob, targetDir)
+            break
+
     def viewInSubstancePainter(self):
-        tempDir = self.getTemporaryDir()
-        fileName = tempDir / "targetMesh.obj"
+        print("viewing substance")
+        targetMeshName = self.getSelectedMeshName()
+        if(targetMeshName is None):
+            raise Exception("No selected mesh")
+        targetDir = self.createSubstanceDir(targetMeshName)
 
-        bpy.ops.export_scene.obj(filepath=str(fileName))
+        #Export an obj file for substance painter
+        objPath = targetDir / (targetMeshName + ".obj")
+        bpy.ops.export_scene.obj(filepath=str(objPath))
 
-        projDir = tempDir / "substanceProj"
+        #Also export an ogre mesh so substance painter can use the material editor it a later date.
+        self.exportSingleOgreMesh(str(targetDir))
+
+        projFile = targetDir / (targetMeshName + ".spp")
 
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen(["/Applications/Adobe Substance 3D Painter/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter", "--mesh", str(fileName), str(projDir)], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen(["/Applications/Adobe Substance 3D Painter/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter", "--mesh", str(objPath), str(projFile)], stdout=devnull, stderr=devnull)
         devnull.close()
 
     def execute(self, context):
