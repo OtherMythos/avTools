@@ -59,6 +59,14 @@ def exportTextures() :
     if not substance_painter.project.is_open() :
         return
 
+    # Setup the export path, in this case the textures
+    # will be put next to the spp project file on the disk
+    targetPath = substance_painter.project.file_path()
+    print(targetPath)
+    if(targetPath is None):
+        return
+    targetPath = os.path.dirname(targetPath) + "/"
+
     # Get the currently active layer stack (paintable)
     stack = substance_painter.textureset.get_active_stack()
 
@@ -77,11 +85,6 @@ def exportTextures() :
 
     # Setup the export settings
     resolution = material.get_resolution()
-
-    # Setup the export path, in this case the textures
-    # will be put next to the spp project file on the disk
-    targetPath = substance_painter.project.file_path()
-    targetPath = os.path.dirname(targetPath) + "/"
 
     # Build the configuration
     config = {
@@ -136,6 +139,9 @@ def exportTextures() :
         outfile.write(json_string)
 
 def viewInEngine():
+    if substance_painter.project.file_path() is None:
+        return
+
     #Export the latest textures so the engine reflects what's on screen.
     exportTextures()
 
