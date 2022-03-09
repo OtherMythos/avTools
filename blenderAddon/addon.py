@@ -86,6 +86,19 @@ class avEngineExportBase(bpy.types.Operator):
         targetPath.mkdir(parents=True)
         return targetPath
 
+    def getSubstancePainterPath(self):
+        attemptFiles = [
+            "/Applications/Adobe Substance 3D Painter/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter",
+            "/Users/edward/Library/Application Support/Steam/steamapps/common/Substance 3D Painter 2022/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter"
+        ]
+
+        for i in attemptFiles:
+            p = Path(i)
+            if p.exists() and p.is_file():
+                return i
+
+        return None
+
     def createAvSetupFile(self, basePath, targetMesh, targetMaterialFile):
         targetPath = basePath / Path("avSetupAddition.cfg")
         data = {
@@ -284,6 +297,10 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
 
     def viewInSubstancePainter(self):
         print("viewing substance")
+        substancePath = self.getSubstancePainterPath()
+        if substancePath is None:
+            raise Exception("Substance painter not found.")
+
         targetMeshName = self.getSelectedMeshName()
         if(targetMeshName is None):
             raise Exception("No selected mesh")
@@ -291,7 +308,7 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
 
         #Export an obj file for substance painter
         objPath = targetDir / (targetMeshName + ".obj")
-        bpy.ops.export_scene.obj(filepath=str(objPath))
+        bpy.ops.export_scene.obj(filepath=str(objPath), use_selection=True)
 
         #Also export an ogre mesh so substance painter can use the material editor it a later date.
         self.exportSingleOgreMesh(str(targetDir))
@@ -299,7 +316,7 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
         projFile = targetDir / (targetMeshName + ".spp")
 
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen(["/Applications/Adobe Substance 3D Painter/Adobe Substance 3D Painter.app/Contents/MacOS/Adobe Substance 3D Painter", "--mesh", str(objPath), str(projFile)], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen([substancePath, "--mesh", str(objPath), str(projFile)], stdout=devnull, stderr=devnull)
         devnull.close()
 
     def execute(self, context):
