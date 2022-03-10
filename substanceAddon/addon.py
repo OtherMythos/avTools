@@ -114,19 +114,19 @@ def exportTextures() :
             projectName: {
                 "workflow": "metallic",
                 "normal": {
-                    "texture": str(projectName) + "_Normal.png"
+                    "texture": str(projectName) + "_" + str(stack) + "_Normal.png"
                 },
                 "diffuse": {
-                    "texture": str(projectName) + "_AlbedoTransparency.png"
+                    "texture": str(projectName) + "_" + str(stack) + "_AlbedoTransparency.png"
                 },
                 "metallness": {
-                    "texture": str(projectName) + "_Metalic.png"
+                    "texture": str(projectName) + "_" + str(stack) + "_Metalic.png"
                 },
                 "specular": {
-                    "texture": str(projectName) + "_Metalic.png"
+                    "texture": str(projectName) + "_" + str(stack) + "_Metalic.png"
                 },
                 "roughness": {
-                    "texture": str(projectName) + "_Roughness.png"
+                    "texture": str(projectName) + "_" + str(stack) + "_Roughness.png"
                 }
             }
         }
