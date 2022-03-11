@@ -23,12 +23,18 @@ def getExpectedMaterialFilePath():
     jsonPath = rootPath / (projectName + ".material.json")
     return jsonPath
 
-def openEngineWithArgs(setupArgs):
+def openEngineWithArgs(setupArgs, basePath):
     enginePath = "/Users/edward/Documents/avEngine/build/Debug/av.app/Contents/MacOS/av"
     args = [enginePath]
     args.extend(setupArgs)
 
+    execPath = basePath / "execEngine.sh"
+    with open(str(execPath), 'w') as outfile:
+        for item in args:
+            outfile.write("%s " % item)
+
     devnull = open(os.devnull, 'w')
+    print(args)
     process = subprocess.Popen(args, stdout=devnull, stderr=devnull)
     devnull.close()
 
@@ -111,7 +117,7 @@ def exportTextures() :
 
     data = {
         "pbs": {
-            projectName: {
+            str(stack): {
                 "workflow": "metallic",
                 "normal": {
                     "texture": str(projectName) + "_" + str(stack) + "_Normal.png"
@@ -150,7 +156,7 @@ def viewInEngine():
     materialName = getExpectedMaterialFilePath()
 
     setupFilePath = createAvSetupFile(projectDir, projectName, materialName)
-    openEngineWithArgs(["/Users/edward/Documents/materialEditor/avSetup.cfg", str(setupFilePath)])
+    openEngineWithArgs(["/Users/edward/Documents/materialEditor/avSetup.cfg", str(setupFilePath)], projectDir)
 
 def start_plugin():
     # Create a text widget for a menu
