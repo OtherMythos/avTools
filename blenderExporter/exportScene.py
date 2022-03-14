@@ -17,7 +17,6 @@ def processCollection(idx, parent, col):
         ob.rotation_mode = 'QUATERNION'
         #0(w) goes first, z(3) and y(2) are flipped.
         quaternionElem = ET.SubElement(meshElem, "orientation", x=str(ob.rotation_quaternion[1]), y=str(ob.rotation_quaternion[3]), z=str(-(ob.rotation_quaternion[2])), w=str(ob.rotation_quaternion[0]))
-        #TODO export orientation
 
     for ob in col.children:
         assert type(ob) is bpy.types.Collection

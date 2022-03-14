@@ -19,8 +19,9 @@ plugin_widgets = []
 
 def getExpectedMaterialFilePath():
     rootPath = Path(substance_painter.project.file_path()).parent
-    projectName = Path(substance_painter.project.file_path()).stem
-    jsonPath = rootPath / (projectName + ".material.json")
+    #projectName = Path(substance_painter.project.file_path()).stem
+    projectName = substance_painter.textureset.get_active_stack()
+    jsonPath = rootPath / (str(projectName) + ".material.json")
     return jsonPath
 
 def openEngineWithArgs(setupArgs, basePath):
