@@ -14,6 +14,7 @@ import shutil
 from io_ogre.ogre.mesh import dot_mesh
 from io_ogre.ogre.skeleton import dot_skeleton
 
+import xml.etree.cElementTree as ET
 
 _CONFIG_TAGS_ = ['AV_ENGINE_PATH', 'MATERIAL_EDITOR_AV_SETUP', 'PROJECT_AV_SETUP']
 av_plugin_config = {
@@ -99,7 +100,7 @@ class avEngineExportBase(bpy.types.Operator):
 
         return None
 
-    def createAvSetupFile(self, basePath, targetMesh, targetMaterialFile):
+    def createAvSetupFile(self, basePath, targetMesh=None, targetMaterialFile=None, targetStartScene=None):
         targetPath = basePath / Path("avSetupAddition.cfg")
         data = {
             'OgreResources':{
@@ -109,7 +110,8 @@ class avEngineExportBase(bpy.types.Operator):
             },
             'UserSettings':{
                 'StartMesh': targetMesh,
-                'StartFile': targetMaterialFile
+                'StartFile': targetMaterialFile,
+                'StartScene': targetStartScene,
             }
         }
 
@@ -125,6 +127,11 @@ class avEngineExportBase(bpy.types.Operator):
         if bpy.context.blend_data.filepath == '':
             return '/tmp/material.material.json'
         return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".material.json"
+
+    def getProjectAvSceneFile(self):
+        if bpy.context.blend_data.filepath == '':
+            return 'scene.avscene'
+        return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".avscene"
 
     '''
     Parse the json data of a material file which already exists, trying to insert the missing values from inputData.
@@ -148,14 +155,14 @@ class avEngineExportBase(bpy.types.Operator):
 
         return readData
 
-    def exportMeshes(self, tempDir):
+    def exportMeshes(self, tempDir, objects, exportMaterials=True):
         materialData = {
             "pbs":{
             }
         }
 
         firstMesh = None
-        for ob in bpy.context.selected_objects:
+        for ob in objects:
             if ob.type != 'MESH':
                 continue
             meshName = ob.data.name + ".mesh"
@@ -169,12 +176,13 @@ class avEngineExportBase(bpy.types.Operator):
             if firstMesh is None:
                 firstMesh = meshName
 
-        outMaterialFilePath = self.getProjectMaterialFile()
-        processedMaterialData = self.determineSharedMaterialData(materialData, outMaterialFilePath)
-        json_string = json.dumps(processedMaterialData)
+        if exportMaterials:
+            outMaterialFilePath = self.getProjectMaterialFile()
+            processedMaterialData = self.determineSharedMaterialData(materialData, outMaterialFilePath)
+            json_string = json.dumps(processedMaterialData)
 
-        with open(outMaterialFilePath, 'w') as outfile:
-            outfile.write(json_string)
+            with open(outMaterialFilePath, 'w') as outfile:
+                outfile.write(json_string)
 
         return firstMesh
 
@@ -183,18 +191,111 @@ class avEngineExportBase(bpy.types.Operator):
 
         #Generate avSetup file.
         tempDir = self.getTemporaryDir()
-        firstMesh = self.exportMeshes(tempDir)
+        firstMesh = self.exportMeshes(tempDir, bpy.context.selected_objects)
 
-        createdSetupFile = self.createAvSetupFile(tempDir, firstMesh, str(tempDir / self.getProjectMaterialFile()))
+        createdSetupFile = self.createAvSetupFile(tempDir, targetMesh=firstMesh, targetMaterialFile=str(tempDir / self.getProjectMaterialFile()))
 
         pathToEngineExecutable = av_plugin_config[_CONFIG_TAGS_[0]]
         pathToMaterialEditor = av_plugin_config[_CONFIG_TAGS_[1]]
         self._openEngineWithArgs([pathToEngineExecutable, pathToMaterialEditor, createdSetupFile])
 
+
+    ###
+    def processCollection(self, idx, parent, col):
+        # if not layerCol.is_visible:
+        #     return
+        # col = layerCol.collection
+        #print("Processing collection with name " + layerCol.data.name)
+        elem = ET.SubElement(parent, "empty")
+
+        for ob in col.objects:
+            if ob.type != 'MESH':
+                continue
+            if ob.hide_get():
+                continue
+
+            meshName = ob.data.name + ".mesh"
+            print("Adding name with " +meshName)
+            meshElem = ET.SubElement(elem, "mesh", name=ob.name, mesh=meshName)
+            posElem = ET.SubElement(meshElem, "position", x=str(ob.location[0]), y=str(ob.location[2]), z=str(-ob.location[1]))
+            scaleElem = ET.SubElement(meshElem, "scale", x=str(ob.scale[0]), y=str(ob.scale[2]), z=str(ob.scale[1]))
+            ob.rotation_mode = 'QUATERNION'
+            #0(w) goes first, z(3) and y(2) are flipped.
+            quaternionElem = ET.SubElement(meshElem, "orientation", x=str(ob.rotation_quaternion[1]), y=str(ob.rotation_quaternion[3]), z=str(-(ob.rotation_quaternion[2])), w=str(ob.rotation_quaternion[0]))
+
+        print(col.children)
+        for ob in col.children:
+            #for ob in col.children:
+            #assert type(ob) is bpy.types.LayerCollection
+            assert type(ob) is bpy.types.Collection
+            print("collection: " + ob.name)
+            self.processCollection(idx + 1, elem, ob)
+    ###
+
+    def exportAvSceneFile(self, path):
+        c = bpy.context.scene.collection
+        #c = bpy.context.collection
+
+        root = ET.Element("scene")
+        self.processCollection(0, root, c)
+
+        tree = ET.ElementTree(root)
+        tree.write(path)
+
     def _openEngineWithArgs(self, args):
         devnull = open(os.devnull, 'w')
         process = subprocess.Popen(args, stdout=devnull, stderr=devnull)
         devnull.close()
+
+class avEngineExportSceneFile(avEngineExportBase):
+    """Export avScene"""
+    bl_idname = "avengine.export_scene"
+    bl_label = "Export scene"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return isEngineSettingsValid()
+
+    def execute(self, context):
+        #TODO add a popup to select the proper path.
+        self.exportAvSceneFile("/tmp/test.avscene")
+
+        return {'FINISHED'}
+
+class avEngineViewSceneInEngine(avEngineExportBase):
+    """View scene in project"""
+    bl_idname = "avengine.view_scene_in_project"
+    bl_label = "View scene in project"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return isEngineSettingsValid()
+
+    def viewingSceneInEngine(self):
+        print("Viewing scene in engine.")
+
+        #Generate avSetup file.
+        tempDir = self.getTemporaryDir()
+
+        projName = Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem
+        targetPath = tempDir / self.getProjectAvSceneFile()
+        self.exportAvSceneFile(str(targetPath))
+
+        firstMesh = self.exportMeshes(tempDir, bpy.context.visible_objects)
+
+        createdSetupFile = self.createAvSetupFile(tempDir, targetStartScene=str(targetPath))
+
+        pathToEngineExecutable = av_plugin_config[_CONFIG_TAGS_[0]]
+        pathToMaterialEditor = av_plugin_config[_CONFIG_TAGS_[1]]
+        projectSetupFile = av_plugin_config[_CONFIG_TAGS_[2]]
+        self._openEngineWithArgs([pathToEngineExecutable, projectSetupFile, pathToMaterialEditor, createdSetupFile])
+
+    def execute(self, context):
+        self.viewingSceneInEngine()
+
+        return {'FINISHED'}
 
 class avEngineViewInEngine(avEngineExportBase):
     """View in avEngine"""
@@ -235,9 +336,9 @@ class avEngineViewInProject(avEngineExportBase):
 
         #Generate avSetup file.
         tempDir = self.getTemporaryDir()
-        firstMesh = self.exportMeshes(tempDir)
+        firstMesh = self.exportMeshes(tempDir, bpy.context.selected_objects)
 
-        createdSetupFile = self.createAvSetupFile(tempDir, firstMesh, str(tempDir / self.getProjectMaterialFile()))
+        createdSetupFile = self.createAvSetupFile(tempDir, targetMesh=firstMesh, targetMaterial=str(tempDir / self.getProjectMaterialFile()))
 
         pathToEngineExecutable = av_plugin_config[_CONFIG_TAGS_[0]]
         pathToMaterialEditor = av_plugin_config[_CONFIG_TAGS_[1]]
@@ -331,6 +432,8 @@ class VIEW3D_MT_menu(bpy.types.Menu):
     def draw(self, context):
         self.layout.operator(avEngineViewInEngine.bl_idname)
         self.layout.operator(avEngineViewInProject.bl_idname)
+        self.layout.operator(avEngineExportSceneFile.bl_idname)
+        self.layout.operator(avEngineViewSceneInEngine.bl_idname)
         self.layout.operator(avEngineCreateSubstancePainterProject.bl_idname)
 
 def addmenu_callback(self, context):
@@ -343,6 +446,8 @@ def add_preview_button(self, context):
 def register():
     bpy.utils.register_class(avEngineViewInEngine)
     bpy.utils.register_class(avEngineViewInProject)
+    bpy.utils.register_class(avEngineExportSceneFile)
+    bpy.utils.register_class(avEngineViewSceneInEngine)
     bpy.utils.register_class(avEngineCreateSubstancePainterProject)
     bpy.utils.register_class(VIEW3D_MT_menu)
     bpy.utils.register_class(avEngineBlenderAddonPreferences)
@@ -355,6 +460,8 @@ def unregister():
     bpy.utils.unregister_class(avEngineViewInEngine)
     bpy.utils.unregister_class(avEngineBlenderAddonPreferences)
     bpy.utils.unregister_class(avEngineViewInProject)
+    bpy.utils.unregister_class(avEngineExportSceneFile)
+    bpy.utils.unregister_class(avEngineViewSceneInEngine)
     bpy.utils.unregister_class(avEngineCreateSubstancePainterProject)
 
     bpy.types.VIEW3D_HT_header.remove(addmenu_callback)
