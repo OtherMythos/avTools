@@ -170,6 +170,11 @@ class avEngineExportBase(bpy.types.Operator):
             for mat in ob.material_slots:
                 materialData["pbs"][mat.name] = { }
 
+            meshPath = tempDir / meshName
+            #I might have a linked mesh where multiple objects use the same mesh, so don't try and re-export it.
+            if meshPath.exists():
+                continue
+
             dot_mesh(ob, tempDir)
             dot_skeleton(ob, tempDir / (ob.data.name + ".skeleton"))
 
