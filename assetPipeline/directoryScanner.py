@@ -2,6 +2,7 @@ from pathlib import Path
 from exportManager import ExportManager
 from resourceMetaFile import *
 import shutil
+import fnmatch
 
 import os
 
@@ -36,6 +37,13 @@ class DirectoryScanner:
 
         return self.resourceMetaBase.defaultProfile
 
+    def isPathBlacklistedByResourceMeta(self, filePath):
+        for f in self.resourceMetaBase.blacklistedFiles:
+            if fnmatch.fnmatch(filePath, f):
+                return True
+
+        return False
+
     '''
     Traverse the input directory for files to convert.
     '''
@@ -44,6 +52,10 @@ class DirectoryScanner:
 
         for root, subdirs, files in os.walk( str(path) ):
             rootPath = Path(root)
+            if self.isPathBlacklistedByResourceMeta(rootPath.stem):
+                print("Skipping directory %s as blacklisted by resourceMetaBase" % root)
+                continue
+
             targetDirectoryResFile = rootPath / Path("resourceMeta.json")
             currentDirMetaFile = ResourceMetaFile()
             currentDirMetaFileValid = False
@@ -65,6 +77,9 @@ class DirectoryScanner:
 
             for file in files:
                 if file in self.blacklistFiles:
+                    continue
+                if self.isPathBlacklistedByResourceMeta(file):
+                    print("Skipping file %s as blacklisted by resourceMetaBase" % file)
                     continue
 
                 resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, targetProfile)

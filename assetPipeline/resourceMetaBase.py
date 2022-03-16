@@ -2,10 +2,6 @@ import os
 from pathlib import Path
 import json
 
-#TODO parse this file at the beginning of the execution.
-#Ensure the universal is there.
-#Write the other files.
-
 '''
 Data for a profile.
 A profile might be something like MacOS, IOS, Desktop, etc.
@@ -34,6 +30,7 @@ class ResourceMetaBase:
         self.valid = False;
         self.profiles = []
         self.defaultProfile = "Universal"
+        self.blacklistedFiles = []
 
     def parseFile(self, path):
         filePath = Path(path)
@@ -91,6 +88,8 @@ class ResourceMetaBase:
         if len(newList) != len(array):
             return None
 
+        #NOTE: Is this correct? Not sure because I think ids are just used to reference in the list.
+        #They don't designate any importance in the list of profiles, for instance the user might specify a child before a parent?
         newList.sort(key=lambda x: x.id, reverse=False)
         retList = []
         for i in newList:
@@ -113,6 +112,19 @@ class ResourceMetaBase:
         prof = self.profiles[idx]
         if not prof.independantBuildable:
             return False
+
+        return True
+
+    def processBlacklistFiles(self, blacklistData):
+        if not isinstance(blacklistData, list):
+            print("Blacklist must contain a list")
+            return False
+
+        for i in blacklistData:
+            if not isinstance(i, str):
+                continue
+
+            self.blacklistedFiles.append(i)
 
         return True
 
@@ -143,8 +155,12 @@ class ResourceMetaBase:
             universalProfile.name = "Universal"
             universalProfile.parent = None
             universalProfile.independantBuildable = True
-            newProfile.id = len(self.profiles)
-            self.profiles.append(universalProfile)
+            universalProfile.id = 0
+            #Bump all indices
+            for i in self.profiles:
+                i.id+=1
+            #Push to front of list.
+            self.profiles.insert(0, universalProfile)
 
         #Scan through all the found profiles and match up the parents with the children.
         for i in range(len(self.profiles)):
@@ -186,6 +202,11 @@ class ResourceMetaBase:
         if "DefaultProfile" in data and type(data["DefaultProfile"]) is str:
             default = data["DefaultProfile"]
             self.defaultProfile = default
+
+        if "BlacklistFiles" in data:
+            result = self.processBlacklistFiles(data["BlacklistFiles"])
+            if not result:
+                return False
 
         return True
 

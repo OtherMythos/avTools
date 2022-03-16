@@ -136,5 +136,28 @@ class ParsedFileTests(unittest.TestCase):
         result = f.parseJsonString(jsonData)
         self.assertFalse(result)
 
+    def test_blacklistInvalidFiles(self):
+        jsonData = '''
+        {
+            "BlacklistFiles": null
+        }
+        '''
+        f = ResourceMetaBase()
+        result = f.parseJsonString(jsonData)
+        self.assertFalse(result)
+
+    def test_blacklistFilesInFile(self):
+        jsonData = '''
+        {
+            "BlacklistFiles": [
+                "test.png",
+                "second.txt"
+            ]
+        }
+        '''
+        f = ResourceMetaBase()
+        result = f.parseJsonString(jsonData)
+        self.assertTrue(result)
+
 if __name__ == '__main__':
     unittest.main()
