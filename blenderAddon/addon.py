@@ -23,6 +23,77 @@ av_plugin_config = {
     _CONFIG_TAGS_[2]: "/Users/edward/Documents/rpgGame/avSetup.cfg",
 }
 
+#A helper script in the substance directory.
+#This will automatically copy all textures and materials from the substance directory to the expected place.
+copyInResourcesScript = '''
+# #############################
+#  avEngine helper script v1.0
+#      copyInResources.py
+# #############################
+
+#This script will copy all textures and materials into the assets directory scructure.
+#It assumes you have followed the suggested avEngine project structure, involving an assets directory.
+#The resources will be added in a directory structure which mirrors how they were places in the meshes directory.
+
+import os
+from pathlib import Path
+import shutil
+
+def traceParentDirectory(startDir):
+    tmpPath = startDir
+    localPath = Path("")
+    while(tmpPath != Path("/")):
+        if tmpPath.name == "meshes":
+            if tmpPath.parent.name == "assets":
+                #Get the parent of local path to avoid the substance directory.
+                return (tmpPath.parent, localPath.parent)
+        localPath = Path(tmpPath.name) / localPath
+        tmpPath = tmpPath.parent
+
+    return None
+
+def _copy(path, localPath, targetPath):
+    parentPath = targetPath / localPath
+    if not parentPath.exists():
+        parentPath.mkdir(parents=True)
+
+    totalPath = parentPath / str(path.name)
+    print("Copying %s to %s" % (path, totalPath))
+    shutil.copyfile(path, totalPath)
+
+def copyInTexture(parent, localPath, path):
+    targetPath = parent / "meshTextures"
+    _copy(path, localPath, targetPath)
+
+def copyInMaterial(parent, localPath, path):
+    targetPath = parent / "meshMaterials"
+    _copy(path, localPath, targetPath)
+
+def main():
+    startPath = Path(__file__).parent
+
+    parentDir = traceParentDirectory(startPath)
+    if parentDir is None:
+        print("Could not find the location to place resources in.")
+        print("This script expects an assets directory containing a meshes directory i.e res://assets/meshes/__substance_")
+        return
+
+    print("Parent dir: " + str(parentDir[0]))
+    print("local path: " + str(parentDir[1]))
+
+    for root, subdirs, files in os.walk( str(startPath) ):
+        for file in files:
+            if file.endswith(".png"):
+                copyInTexture(parentDir[0], parentDir[1], startPath / file)
+            elif file.endswith(".material.json"):
+                copyInMaterial(parentDir[0], parentDir[1], startPath / file)
+
+
+
+if __name__ == "__main__":
+    main()
+'''
+
 def isEngineSettingsValid():
     global av_plugin_config
 
@@ -380,6 +451,11 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
             raise Exception("Substance directory already exists %s" % str(targetPath))
 
         targetPath.mkdir(parents=True)
+
+        #Copy in the script to submit textures.
+        with open(targetPath / Path("copyInResources.py"), "w") as text_file:
+            text_file.write(copyInResourcesScript)
+
         return targetPath
 
     def getSelectedMeshName(self):
@@ -416,13 +492,17 @@ class avEngineCreateSubstancePainterProject(avEngineExportBase):
         objPath = targetDir / (targetMeshName + ".obj")
         bpy.ops.export_scene.obj(filepath=str(objPath), use_selection=True)
 
-        #Also export an ogre mesh so substance painter can use the material editor it a later date.
+        #Also export an ogre mesh so substance painter can use the material editor at a later date.
         self.exportSingleOgreMesh(str(targetDir))
 
         projFile = targetDir / (targetMeshName + ".spp")
 
+        substanceVars = [substancePath, "--mesh", str(objPath), str(projFile)]
+        print("executing substance process:")
+        print(" ".join(substanceVars))
+
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen([substancePath, "--mesh", str(objPath), str(projFile)], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen(substanceVars, stdout=devnull, stderr=devnull)
         devnull.close()
 
     def execute(self, context):
