@@ -96,6 +96,7 @@ def exportTextures() :
     # Build the configuration
     config = {
         "exportShaderParams"     : False,
+        "resolution": [resolution.width, resolution.height],
         "exportPath"             : targetPath,
         "exportList"            : [ { "rootPath" : str(stack) } ],
         "exportPresets"         : [ { "name" : "default", "maps" : [] } ],
