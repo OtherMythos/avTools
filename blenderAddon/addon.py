@@ -316,6 +316,7 @@ class avEngineExportBase(bpy.types.Operator):
         self.processCollection(0, root, c)
 
         tree = ET.ElementTree(root)
+        ET.indent(tree, space="    ", level=0)
         tree.write(path)
 
     def _openEngineWithArgs(self, args):
@@ -336,6 +337,63 @@ class avEngineExportSceneFile(avEngineExportBase):
     def execute(self, context):
         #TODO add a popup to select the proper path.
         self.exportAvSceneFile("/tmp/test.avscene")
+
+        return {'FINISHED'}
+
+class avEngineViewAnimationInEngine(avEngineExportBase):
+    """View animation in engine"""
+    bl_idname = "avengine.view_animation_in_engine"
+    bl_label = "View animation in engine"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(cls, context):
+        return isEngineSettingsValid()
+
+    def viewingAnimationInEngine(self, context):
+        print("Viewing animation scene in engine")
+
+        animName = "testName"
+
+        root = ET.Element("AnimationSequence")
+        createdDataObjs = 0
+        dataContainer = ET.SubElement(root, "data")
+        animContainer = ET.SubElement(root, "animations")
+
+        animTag = ET.SubElement(animContainer, animName)
+
+        startFrame = context.scene.frame_current
+        for ob in bpy.context.selected_objects:
+            dataEntry = ET.SubElement(dataContainer, "targetNode")
+            dataEntry.set("type", "SceneNode")
+
+            track = ET.SubElement(animTag, "t")
+            track.set("repeat", "false")
+            track.set("type", "transform")
+            track.set("target", str(createdDataObjs))
+            track.set("end", str(context.scene.frame_end))
+            #for f in ob.animation_data.action.fcurves:
+            f = ob.animation_data.action.fcurves
+            for i in f[0].keyframe_points:
+                fr = int(i.co[0])
+                context.scene.frame_set(fr)
+
+                key = ET.SubElement(track, "k")
+                key.set("t", str(fr))
+                key.set("position", "%f, %f, %f" % (ob.location.x, ob.location.y, ob.location.z))
+                key.set("rot", "%f, %f, %f" % (ob.rotation_euler.x, ob.rotation_euler.y, ob.rotation_euler.z))
+                key.set("scale", "%f, %f, %f" % (ob.scale.x, ob.scale.y, ob.scale.z))
+
+            createdDataObjs += 1
+
+        context.scene.frame_set(startFrame)
+
+        tree = ET.ElementTree(root)
+        ET.indent(tree, space="    ", level=0)
+        tree.write("/tmp/something.anim")
+
+    def execute(self, context):
+        self.viewingAnimationInEngine(context)
 
         return {'FINISHED'}
 
@@ -519,6 +577,7 @@ class VIEW3D_MT_menu(bpy.types.Menu):
         self.layout.operator(avEngineViewInProject.bl_idname)
         self.layout.operator(avEngineExportSceneFile.bl_idname)
         self.layout.operator(avEngineViewSceneInEngine.bl_idname)
+        self.layout.operator(avEngineViewAnimationInEngine.bl_idname)
         self.layout.operator(avEngineCreateSubstancePainterProject.bl_idname)
 
 def addmenu_callback(self, context):
@@ -533,6 +592,7 @@ def register():
     bpy.utils.register_class(avEngineViewInProject)
     bpy.utils.register_class(avEngineExportSceneFile)
     bpy.utils.register_class(avEngineViewSceneInEngine)
+    bpy.utils.register_class(avEngineViewAnimationInEngine)
     bpy.utils.register_class(avEngineCreateSubstancePainterProject)
     bpy.utils.register_class(VIEW3D_MT_menu)
     bpy.utils.register_class(avEngineBlenderAddonPreferences)
