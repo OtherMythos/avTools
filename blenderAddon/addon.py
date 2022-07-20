@@ -174,7 +174,7 @@ class avEngineExportBase(bpy.types.Operator):
 
         return None
 
-    def createAvSetupFile(self, basePath, targetMesh=None, targetMaterialFile=None, targetStartScene=None):
+    def createAvSetupFile(self, basePath, targetMesh=None, targetMaterialFile=None, targetStartScene=None, targetAnimFile=None):
         targetPath = basePath / Path("avSetupAddition.cfg")
         data = {
             'OgreResources':{
@@ -186,6 +186,7 @@ class avEngineExportBase(bpy.types.Operator):
                 'StartMesh': targetMesh,
                 'StartFile': targetMaterialFile,
                 'StartScene': targetStartScene,
+                'StartAnimFile': targetAnimFile,
             }
         }
 
@@ -337,6 +338,7 @@ class avEngineExportBase(bpy.types.Operator):
         tree.write(path)
 
     def _openEngineWithArgs(self, args):
+        print(" ".join([str(x) for x in args]))
         devnull = open(os.devnull, 'w')
         process = subprocess.Popen(args, stdout=devnull, stderr=devnull)
         devnull.close()
@@ -377,9 +379,11 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
         animContainer = ET.SubElement(root, "animations")
 
         animTag = ET.SubElement(animContainer, animName)
+        animTag.set("repeat", "true")
+        animTag.set("end", str(context.scene.frame_end))
 
         startFrame = context.scene.frame_current
-        for ob in bpy.context.selected_objects:
+        for ob in bpy.context.visible_objects:
             animIdx = -1
             if ob.name in self.mAnimData:
                 animIdx = self.mAnimData[ob.name]
@@ -387,17 +391,16 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
                 #has no animation
                 continue
 
-            dataEntry = ET.SubElement(dataContainer, "targetNode")
+            #TODO change this to something else.
+            dataEntry = ET.SubElement(dataContainer, "targetNode"+str(animIdx))
             dataEntry.set("type", "SceneNode")
             dataEntry.set("name", "SceneNode")
 
             track = ET.SubElement(animTag, "t")
-            track.set("repeat", "false")
             track.set("type", "transform")
             track.set("target", str(animIdx))
-            track.set("end", str(context.scene.frame_end))
 
-            if not "animation_data" in ob:
+            if ob.animation_data is None:
                 continue
 
             f = ob.animation_data.action.fcurves
@@ -407,9 +410,9 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
 
                 key = ET.SubElement(track, "k")
                 key.set("t", str(fr))
-                key.set("position", "%f, %f, %f" % (ob.location.x, ob.location.y, ob.location.z))
-                key.set("rot", "%f, %f, %f" % (ob.rotation_euler.x, ob.rotation_euler.y, ob.rotation_euler.z))
-                key.set("scale", "%f, %f, %f" % (ob.scale.x, ob.scale.y, ob.scale.z))
+                key.set("position", "%f, %f, %f" % (ob.location.x, ob.location.z, -ob.location.y))
+                key.set("quat", "%f, %f, %f, %f" % (ob.rotation_quaternion.w, ob.rotation_quaternion.x, ob.rotation_quaternion.y, ob.rotation_quaternion.z))
+                key.set("scale", "%f, %f, %f" % (ob.scale.x, ob.scale.z, ob.scale.y))
 
         context.scene.frame_set(startFrame)
 
@@ -421,13 +424,25 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
         tempDir = self.getTemporaryDir()
 
         projName = Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem
-        targetPath = tempDir / self.getProjectAvSceneFile()
-        print("Exporting scene to %s" % targetPath)
-        self.exportAvSceneFile(str(targetPath), exportAnimIds=True)
+        #targetScenePath = tempDir / self.getProjectAvSceneFile()
+        targetScenePath = Path("/tmp/avEngineBlender/scene.avscene")
+        print("Exporting scene to %s" % targetScenePath)
+        self.exportAvSceneFile(str(targetScenePath), exportAnimIds=True)
 
-        targetPath = tempDir / self.getProjectAnimationFile()
-        print("Exporting animation to %s" % targetPath)
-        self.exportAnimationForEngine(context, str(targetPath))
+        self.exportMeshes(tempDir, bpy.context.visible_objects)
+
+        #targetAnimPath = tempDir / self.getProjectAnimationFile()
+        targetAnimPath = Path("/tmp/avEngineBlender/avAnimation.xml")
+        print("Exporting animation to %s" % targetAnimPath)
+        self.exportAnimationForEngine(context, str(targetAnimPath))
+
+        #View the exported anim in the engine.
+        createdSetupFile = self.createAvSetupFile(tempDir, targetStartScene=str(targetScenePath), targetAnimFile=str(targetAnimPath))
+
+        pathToEngineExecutable = av_plugin_config[_CONFIG_TAGS_[0]]
+        pathToMaterialEditor = av_plugin_config[_CONFIG_TAGS_[1]]
+        projectSetupFile = av_plugin_config[_CONFIG_TAGS_[2]]
+        self._openEngineWithArgs([pathToEngineExecutable, projectSetupFile, pathToMaterialEditor, createdSetupFile])
 
         return {'FINISHED'}
 
@@ -451,7 +466,7 @@ class avEngineViewSceneInEngine(avEngineExportBase):
         targetPath = tempDir / self.getProjectAvSceneFile()
         self.exportAvSceneFile(str(targetPath))
 
-        firstMesh = self.exportMeshes(tempDir, bpy.context.visible_objects)
+        self.exportMeshes(tempDir, bpy.context.visible_objects)
 
         createdSetupFile = self.createAvSetupFile(tempDir, targetStartScene=str(targetPath))
 
