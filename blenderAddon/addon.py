@@ -145,6 +145,9 @@ class avEngineBlenderAddonPreferences(bpy.types.AddonPreferences):
 
 class avEngineExportBase(bpy.types.Operator):
 
+    def __init__(self):
+        self.mAnimData = {}
+
     def getTemporaryDir(self):
         #For unix alone.
         start = "/tmp"
@@ -203,6 +206,11 @@ class avEngineExportBase(bpy.types.Operator):
         if bpy.context.blend_data.filepath == '':
             return 'scene.avscene'
         return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".avscene"
+
+    def getProjectAnimationFile(self):
+        if bpy.context.blend_data.filepath == '':
+            return 'avAnimation.xml'
+        return str(Path(bpy.context.blend_data.filepath).parent / Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem) + ".xml"
 
     '''
     Parse the json data of a material file which already exists, trying to insert the missing values from inputData.
@@ -277,7 +285,7 @@ class avEngineExportBase(bpy.types.Operator):
 
 
     ###
-    def processCollection(self, idx, parent, col):
+    def processCollection(self, idx, parent, col, exportAnimIds=False):
         # if not layerCol.is_visible:
         #     return
         # col = layerCol.collection
@@ -293,6 +301,15 @@ class avEngineExportBase(bpy.types.Operator):
             meshName = ob.data.name + ".mesh"
             print("Adding name with " +meshName)
             meshElem = ET.SubElement(elem, "mesh", name=ob.name, mesh=meshName)
+
+            if exportAnimIds:
+                if ob.animation_data is not None and len(self.mAnimData) < 15:
+                    #This object has an animation
+                    print(ob.name)
+                    animIdx = len(self.mAnimData)
+                    self.mAnimData[ob.name] = animIdx
+                    meshElem.set("animIdx", str(animIdx))
+
             posElem = ET.SubElement(meshElem, "position", x=str(ob.location[0]), y=str(ob.location[2]), z=str(-ob.location[1]))
             scaleElem = ET.SubElement(meshElem, "scale", x=str(ob.scale[0]), y=str(ob.scale[2]), z=str(ob.scale[1]))
             ob.rotation_mode = 'QUATERNION'
@@ -305,15 +322,15 @@ class avEngineExportBase(bpy.types.Operator):
             #assert type(ob) is bpy.types.LayerCollection
             assert type(ob) is bpy.types.Collection
             print("collection: " + ob.name)
-            self.processCollection(idx + 1, elem, ob)
+            self.processCollection(idx + 1, elem, ob, exportAnimIds=exportAnimIds)
     ###
 
-    def exportAvSceneFile(self, path):
+    def exportAvSceneFile(self, path, exportAnimIds=False):
         c = bpy.context.scene.collection
         #c = bpy.context.collection
 
         root = ET.Element("scene")
-        self.processCollection(0, root, c)
+        self.processCollection(0, root, c, exportAnimIds)
 
         tree = ET.ElementTree(root)
         ET.indent(tree, space="    ", level=0)
@@ -350,13 +367,12 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
     def poll(cls, context):
         return isEngineSettingsValid()
 
-    def viewingAnimationInEngine(self, context):
+    def exportAnimationForEngine(self, context, targetPath):
         print("Viewing animation scene in engine")
 
         animName = "testName"
 
         root = ET.Element("AnimationSequence")
-        createdDataObjs = 0
         dataContainer = ET.SubElement(root, "data")
         animContainer = ET.SubElement(root, "animations")
 
@@ -364,15 +380,26 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
 
         startFrame = context.scene.frame_current
         for ob in bpy.context.selected_objects:
+            animIdx = -1
+            if ob.name in self.mAnimData:
+                animIdx = self.mAnimData[ob.name]
+            else:
+                #has no animation
+                continue
+
             dataEntry = ET.SubElement(dataContainer, "targetNode")
             dataEntry.set("type", "SceneNode")
+            dataEntry.set("name", "SceneNode")
 
             track = ET.SubElement(animTag, "t")
             track.set("repeat", "false")
             track.set("type", "transform")
-            track.set("target", str(createdDataObjs))
+            track.set("target", str(animIdx))
             track.set("end", str(context.scene.frame_end))
-            #for f in ob.animation_data.action.fcurves:
+
+            if not "animation_data" in ob:
+                continue
+
             f = ob.animation_data.action.fcurves
             for i in f[0].keyframe_points:
                 fr = int(i.co[0])
@@ -384,16 +411,23 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
                 key.set("rot", "%f, %f, %f" % (ob.rotation_euler.x, ob.rotation_euler.y, ob.rotation_euler.z))
                 key.set("scale", "%f, %f, %f" % (ob.scale.x, ob.scale.y, ob.scale.z))
 
-            createdDataObjs += 1
-
         context.scene.frame_set(startFrame)
 
         tree = ET.ElementTree(root)
         ET.indent(tree, space="    ", level=0)
-        tree.write("/tmp/something.anim")
+        tree.write(targetPath)
 
     def execute(self, context):
-        self.viewingAnimationInEngine(context)
+        tempDir = self.getTemporaryDir()
+
+        projName = Path(bpy.path.basename(bpy.context.blend_data.filepath)).stem
+        targetPath = tempDir / self.getProjectAvSceneFile()
+        print("Exporting scene to %s" % targetPath)
+        self.exportAvSceneFile(str(targetPath), exportAnimIds=True)
+
+        targetPath = tempDir / self.getProjectAnimationFile()
+        print("Exporting animation to %s" % targetPath)
+        self.exportAnimationForEngine(context, str(targetPath))
 
         return {'FINISHED'}
 
