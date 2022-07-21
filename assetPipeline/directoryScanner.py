@@ -100,6 +100,10 @@ class DirectoryScanner:
                     retPath = filePath.with_suffix(".png")
                     outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
                     self.exportManager.exportGimpProject(filePath, str(outputTarget))
+                elif(filePath.suffix == ".svg"):
+                    retPath = filePath.with_suffix(".png")
+                    outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
+                    self.exportManager.exportSvg(filePath, str(outputTarget))
                 else:
                     #TODO implement width, height, widthDiv, heightDiv
                     outPath = filePath

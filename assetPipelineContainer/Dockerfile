@@ -8,12 +8,15 @@ ENV DISPLAY :99
 RUN apt-get update && apt-get install -y \
     wget \
     python3 \
+    python3-pip \
     blender \
     git \
     libxt-dev \
     libxaw7-dev \
     gimp \
     xvfb
+
+RUN python3 -m pip install CairoSVG
 
 COPY entrypoint.sh /builder/entrypoint.sh
 RUN chmod +x /builder/entrypoint.sh

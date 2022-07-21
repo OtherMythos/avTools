@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 import shutil
 
+from cairosvg import svg2png
+
 '''
 Contains functions relating to the exportation of resources.
 This class contains little logic about which files to export,
@@ -120,3 +122,11 @@ echo "(gimp-quit 0)"
         process = subprocess.Popen(["bash", "/tmp/export.sh", filePath, outputPath], stdout=devnull, stderr=devnull)
         process.wait()
         devnull.close()
+
+    '''
+    Export an svg file.
+    '''
+    def exportSvg(self, filePath, outputPath):
+        print("exporting svg file at path '%s' to directory '%s'" % (filePath, outputPath))
+
+        svg2png(url=str(filePath),write_to=str(outputPath))
