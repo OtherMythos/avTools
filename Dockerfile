@@ -25,6 +25,7 @@ RUN mkdir /scripts
 RUN mkdir /output
 
 COPY assetPipeline /scripts/assetPipeline
+COPY blenderExporter /scripts/blenderExporter
 
 RUN mkdir -p /root/.config/blender/2.82/scripts/addons
 RUN git clone https://github.com/OGRECave/blender2ogre.git /builder/blender2ogre
