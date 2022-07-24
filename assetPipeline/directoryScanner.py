@@ -8,12 +8,13 @@ import os
 
 class DirectoryScanner:
 
-    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath, targetProfile):
+    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath, targetProfile, linkFiles=True):
         self.input = Path(inputPath)
         self.output = Path(outputPath)
         self.exportManager = exportManager
         self.resourceMetaBase = resourceMetaBase
         self.targetProfile = targetProfile
+        self.linkFiles = linkFiles
 
         self.blacklistSuffixes = [".blend1", ".swp"]
         self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json"]
@@ -106,14 +107,24 @@ class DirectoryScanner:
                     self.exportManager.exportSvg(filePath, str(outputTarget))
                 else:
                     #TODO implement width, height, widthDiv, heightDiv
-                    outPath = filePath
-                    if resSettings.outDir != "":
-                        outPath = rootPath / resSettings.outDir
-                    #Copy the file over.
-                    outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
-                    shutil.copyfile(filePath, outputTarget)
-                    print("copied %s to %s" % (filePath, outputTarget))
+                    self.copyFile(filePath, resSettings)
 
+
+    def copyFile(self, filePath, resSettings):
+        outPath = filePath
+        if resSettings.outDir != "":
+            outPath = rootPath / resSettings.outDir
+        outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
+
+        # relPath = filePath.relative_to(outputTarget)
+        # print(str(relPath))
+
+        if self.linkFiles:
+            os.symlink(filePath, outputTarget)
+            print("symlinked %s to %s" % (filePath, outputTarget))
+        else:
+            shutil.copyfile(filePath, outputTarget)
+            print("copied %s to %s" % (filePath, outputTarget))
 
     '''
     When execution finishes, perform some final checks.

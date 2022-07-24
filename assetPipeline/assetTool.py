@@ -17,23 +17,24 @@ def main():
 
     parser = argparse.ArgumentParser(description = helpText)
 
-    parser.add_argument('InputDirectory', metavar='I', type=str, nargs='?', help='A path to the input directory.', default=None)
-    parser.add_argument('OutputDirectory', metavar='O', type=str, nargs='?', help='A path to the output directory.', default=None)
+    parser.add_argument('-i', '--input', type=str, nargs='?', help='A path to the input directory.', default=None)
+    parser.add_argument('-o', '--output', type=str, nargs='?', help='A path to the output directory.', default=None)
 
-    parser.add_argument("-c", "--clean", help="Clean the output directory.", default=True, type=bool, nargs='?')
+
+    # parser.add_argument('--feature', action='store_true')
+    # parser.add_argument('--no-feature', dest='feature', action='store_false')
+    # parser.set_defaults(feature=True)
+
+    parser.add_argument('--link', help="Symlink files rather than copying them to the output directory.", action='store_true')
+    parser.add_argument('--clean', help="Clean the output directory.", action='store_true')
     parser.add_argument("-p", "--profile", help="Target profile to use during export", default=None)
 
     parser.add_argument("-b", "--blender", help="The path to a blender executable.", default="blender")
     args = parser.parse_args()
 
-    if args.InputDirectory is None or args.OutputDirectory is None:
+    if args.input is None or args.output is None:
         print("Please provide both an input and output directory path")
         return
-
-
-    shouldPurgeXML = False
-    if args.clean is None:
-        shouldPurgeXML = True
 
     exporter = ExportManager(args.blender)
     if not exporter.executableValid():
@@ -41,7 +42,7 @@ def main():
         return
 
     resourceMetaBase = ResourceMetaBase()
-    resBasePath = Path(args.InputDirectory) / Path("resourceMetaBase.json")
+    resBasePath = Path(args.input) / Path("resourceMetaBase.json")
     if resBasePath.exists() and resBasePath.is_file():
         print("Found resBase file at path %s" % str(resBasePath))
         result = resourceMetaBase.parseFile(str(resBasePath))
@@ -50,16 +51,15 @@ def main():
     else:
         print("Could not find resourceMetaBase.json in path %s\nResource profiles will be disabled." % str(resBasePath))
 
-
-    scanner = DirectoryScanner(exporter, resourceMetaBase, args.InputDirectory, args.OutputDirectory, args.profile)
+    scanner = DirectoryScanner(exporter, resourceMetaBase, args.input, args.output, args.profile, linkFiles=args.link)
     result = scanner.scanPaths()
     if not result:
         #Something failed
         return
 
-    outputPath = Path(args.OutputDirectory)
+    outputPath = Path(args.output)
     scanner.finishExecutionRun()
-    if shouldPurgeXML:
+    if args.clean:
         exporter.recursivePurgeXMLMeshes(outputPath)
 
 if __name__ == "__main__":
