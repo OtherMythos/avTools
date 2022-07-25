@@ -8,7 +8,7 @@ variables:
 
 build-push-docker-image-job:
   # Specify a Docker image to run the job in.
-  image: docker:latest
+  image: ubuntu:latest
   # Specify an additional image 'docker:dind' ("Docker-in-Docker") that
   # will start up the Docker daemon when it is brought up by a runner.
   services:
