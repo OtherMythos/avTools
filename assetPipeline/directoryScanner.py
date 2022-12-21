@@ -93,6 +93,14 @@ class DirectoryScanner:
                 if(filePath.suffix in self.blacklistSuffixes):
                     print("skipping %s" % filePath)
                     continue
+
+                #outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
+                successful = self.exportManager.exportAssetOfExtension(filePath.suffix, filePath, self.input, self.output)
+                if not successful:
+                    #The file extension was not recognised, so just copy the file over.
+                    self.exportManager.copyFile(filePath, self.input, self.output, resSettings)
+
+                '''
                 elif(filePath.suffix == ".blend"):
                     #Blender file.
                     outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
@@ -108,6 +116,7 @@ class DirectoryScanner:
                 else:
                     #TODO implement width, height, widthDiv, heightDiv
                     self.copyFile(filePath, resSettings)
+                '''
 
 
     def copyFile(self, filePath, resSettings):
@@ -136,7 +145,7 @@ class DirectoryScanner:
 
 
     def findOrphanedMeshXMLFiles(self, path):
-        print("scanning")
+        print("scanning for orphaned mesh XML files")
         for root, subdirs, files in os.walk( str(path) ):
             rootPath = Path(root)
             for file in files:
@@ -157,21 +166,3 @@ class DirectoryScanner:
                         continue
                     print("Found orphan skeleton.xml file: %s" % str(filePath))
                     self.exportManager.exportOgreSkeletonXML(filePath, targetFile)
-
-    '''
-    When it's time to write an output file from the input, check the output directory contains the correct structure, similar to the input.
-    If it does not, create the appropriate directory structure.
-    '''
-    def prepareOutputDirectoryForFile(self, inputFilePath, includeFileName = False):
-        relativePath = inputFilePath.relative_to(self.input)
-        outputTargetPath = self.output / relativePath
-
-        #Just the parent directory, without the file name.
-        parentPath = outputTargetPath.parents[0]
-        if not parentPath.exists():
-            parentPath.mkdir(parents=True)
-
-        if includeFileName:
-            parentPath = parentPath / inputFilePath.name
-
-        return parentPath

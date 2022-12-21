@@ -37,9 +37,10 @@ def main():
         return
 
     exporter = ExportManager(args.blender)
-    if not exporter.executableValid():
-        print("Invalid path passed for blender executable.")
-        return
+    #TODO return this check
+    #if not exporter.executableValid():
+    #    print("Invalid path passed for blender executable.")
+    #    return
 
     resourceMetaBase = ResourceMetaBase()
     resBasePath = Path(args.input) / Path("resourceMetaBase.json")
