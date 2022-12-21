@@ -4,12 +4,13 @@ import subprocess
 import os
 
 class AssetModuleXCF(AssetModule):
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.extension = ".xcf"
 
-    def exportForFile(self, filePath, inputDirectory, outputDirectory):
+    def exportForFile(self, filePath):
         retPath = filePath.with_suffix(".png")
-        outputTarget = self.prepareOutputDirectoryForFile(retPath, inputDirectory, outputDirectory, True)
+        outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
         self.exportGimpProject(filePath, str(outputTarget))
 
 

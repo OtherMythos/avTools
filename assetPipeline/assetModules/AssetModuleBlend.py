@@ -4,7 +4,9 @@ from pathlib import Path
 import subprocess
 
 class AssetModuleBlend(AssetModule):
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
+
         self.extension = ".blend"
 
         #If at any point we tried to export a blend file, some checks might be performed later.
@@ -17,11 +19,8 @@ class AssetModuleBlend(AssetModule):
         #TODO there's a bug here if not in a same directory as this file.
         self.blenderExportFileExists = Path(self.blenderExportFile).exists()
 
-    def setBlendPath(self, path):
-        self.blenderPath = path
-
-    def exportForFile(self, filePath, inputDirectory, outputDirectory):
-        outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath, inputDirectory, outputDirectory)
+    def exportForFile(self, filePath):
+        outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
         self.exportBlenderFile(filePath, outputTargetDirectory)
 
     def exportBlenderFile(self, filePath, outputPath):
@@ -32,7 +31,7 @@ class AssetModuleBlend(AssetModule):
 
         #./blender -b ~/Documents/meshTests/newMesh/Grave.blend --python ~/Documents/avTools/exportTest.py -- /tmp/3
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen([str(self.blenderPath), "-b", str(filePath), "--python", self.blenderExportFile, "--", str(outputPath)], stdout=devnull, stderr=devnull)
+        process = subprocess.Popen([str(self.settings.blenderPath), "-b", str(filePath), "--python", self.blenderExportFile, "--", str(outputPath)], stdout=devnull, stderr=devnull)
         process.wait()
         #print(process.communicate())
         devnull.close()

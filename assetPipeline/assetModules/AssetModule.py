@@ -6,22 +6,23 @@ Base class logic to describe how to export an asset type.
 Asset types register a file ending such as .txt, .png, .svg, etc.
 '''
 class AssetModule:
-    def __init__(self):
+    def __init__(self, settings):
         self.extension = None
+        self.settings = settings
 
     def getExtension(self):
         return self.extension
 
-    def exportForFile(self, filePath, inputDirectory, outputPath):
-        print("Example module exporting file %s to %s" % (filePath, outputPath))
+    def exportForFile(self, filePath):
+        print("Example module exporting file %s" % filePath)
 
     '''
     When it's time to write an output file from the input, check the output directory contains the correct structure, similar to the input.
     If it does not, create the appropriate directory structure.
     '''
-    def prepareOutputDirectoryForFile(self, inputFilePath, inputDirectory, outputDirectory, includeFileName = False):
-        relativePath = inputFilePath.relative_to(inputDirectory)
-        outputTargetPath = outputDirectory / relativePath
+    def prepareOutputDirectoryForFile(self, inputFilePath, includeFileName = False):
+        relativePath = inputFilePath.relative_to(self.settings.inputDir)
+        outputTargetPath = self.settings.outputDir/ relativePath
 
         #Just the parent directory, without the file name.
         parentPath = outputTargetPath.parents[0]
@@ -33,18 +34,13 @@ class AssetModule:
 
         return parentPath
 
-    def copyFile(self, filePath, inputDir, outputDir, resSettings):
+    def copyFile(self, filePath, resSettings):
         outPath = filePath
         if resSettings.outDir != "":
             outPath = rootPath / resSettings.outDir
-        outputTarget = self.prepareOutputDirectoryForFile(outPath, inputDir, outputDir, True)
+        outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
 
-        # relPath = filePath.relative_to(outputTarget)
-        # print(str(relPath))
-
-        #TODO return the ability to symlink files.
-        #if self.linkFiles:
-        if False:
+        if self.settings.linkFiles:
             os.symlink(filePath, outputTarget)
             print("symlinked %s to %s" % (filePath, outputTarget))
         else:

@@ -8,13 +8,14 @@ import os
 
 class DirectoryScanner:
 
-    def __init__(self, exportManager, resourceMetaBase, inputPath, outputPath, targetProfile, linkFiles=True):
-        self.input = Path(inputPath)
-        self.output = Path(outputPath)
+    def __init__(self, exportManager, resourceMetaBase, settings):
         self.exportManager = exportManager
         self.resourceMetaBase = resourceMetaBase
-        self.targetProfile = targetProfile
-        self.linkFiles = linkFiles
+
+        self.input = Path(settings.inputDir)
+        self.output = Path(settings.outputDir)
+        self.targetProfile = settings.targetProfile
+        self.linkFiles = settings.linkFiles
 
         self.blacklistSuffixes = [".blend1", ".swp"]
         self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json"]
@@ -95,45 +96,10 @@ class DirectoryScanner:
                     continue
 
                 #outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
-                successful = self.exportManager.exportAssetOfExtension(filePath.suffix, filePath, self.input, self.output)
+                successful = self.exportManager.exportAssetOfExtension(filePath.suffix, filePath)
                 if not successful:
                     #The file extension was not recognised, so just copy the file over.
-                    self.exportManager.copyFile(filePath, self.input, self.output, resSettings)
-
-                '''
-                elif(filePath.suffix == ".blend"):
-                    #Blender file.
-                    outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
-                    self.exportManager.exportBlenderFile(filePath, outputTargetDirectory)
-                elif(filePath.suffix == ".xcf"):
-                    retPath = filePath.with_suffix(".png")
-                    outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
-                    self.exportManager.exportGimpProject(filePath, str(outputTarget))
-                elif(filePath.suffix == ".svg"):
-                    retPath = filePath.with_suffix(".png")
-                    outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
-                    self.exportManager.exportSvg(filePath, str(outputTarget))
-                else:
-                    #TODO implement width, height, widthDiv, heightDiv
-                    self.copyFile(filePath, resSettings)
-                '''
-
-
-    def copyFile(self, filePath, resSettings):
-        outPath = filePath
-        if resSettings.outDir != "":
-            outPath = rootPath / resSettings.outDir
-        outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
-
-        # relPath = filePath.relative_to(outputTarget)
-        # print(str(relPath))
-
-        if self.linkFiles:
-            os.symlink(filePath, outputTarget)
-            print("symlinked %s to %s" % (filePath, outputTarget))
-        else:
-            shutil.copyfile(filePath, outputTarget)
-            print("copied %s to %s" % (filePath, outputTarget))
+                    self.exportManager.copyFile(filePath, resSettings)
 
     '''
     When execution finishes, perform some final checks.

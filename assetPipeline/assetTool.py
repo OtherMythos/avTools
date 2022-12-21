@@ -3,6 +3,7 @@
 import argparse
 from directoryScanner import DirectoryScanner
 from exportManager import ExportManager
+from settings import Settings
 from pathlib import Path
 from resourceMetaBase import *
 
@@ -36,11 +37,12 @@ def main():
         print("Please provide both an input and output directory path")
         return
 
-    exporter = ExportManager(args.blender)
-    #TODO return this check
-    #if not exporter.executableValid():
-    #    print("Invalid path passed for blender executable.")
-    #    return
+    settings = Settings(args.input, args.output, args.blender, args.profile, args.link)
+    if not settings.blenderExecutableValid():
+        print("Invalid path passed for blender executable.")
+        return
+
+    exporter = ExportManager(settings)
 
     resourceMetaBase = ResourceMetaBase()
     resBasePath = Path(args.input) / Path("resourceMetaBase.json")
@@ -52,7 +54,7 @@ def main():
     else:
         print("Could not find resourceMetaBase.json in path %s\nResource profiles will be disabled." % str(resBasePath))
 
-    scanner = DirectoryScanner(exporter, resourceMetaBase, args.input, args.output, args.profile, linkFiles=args.link)
+    scanner = DirectoryScanner(exporter, resourceMetaBase, settings)
     result = scanner.scanPaths()
     if not result:
         #Something failed
