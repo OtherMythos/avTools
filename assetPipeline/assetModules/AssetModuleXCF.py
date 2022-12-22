@@ -42,7 +42,7 @@ echo "(convert-xcf-to-jpeg \\"${1}\\" \\"${2}\\")"
 
 echo "(gimp-quit 0)"
 
-} | gimp -i -b -
+} | xvfb-run gimp -i -b -
 '''
 
         execFile = open("/tmp/export.sh", "w")

@@ -9,8 +9,6 @@ class AssetModuleBlend(AssetModule):
 
         self.extension = ".blend"
 
-        #If at any point we tried to export a blend file, some checks might be performed later.
-        #self.exportedBlenderFile = False
         self.blenderExportFile = "../blenderExporter/exportTest.py"
 
         self.checkFiles()
@@ -35,5 +33,3 @@ class AssetModuleBlend(AssetModule):
         process.wait()
         #print(process.communicate())
         devnull.close()
-
-        #self.exportedBlenderFile = True

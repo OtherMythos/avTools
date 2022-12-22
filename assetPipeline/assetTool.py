@@ -21,14 +21,10 @@ def main():
     parser.add_argument('-i', '--input', type=str, nargs='?', help='A path to the input directory.', default=None)
     parser.add_argument('-o', '--output', type=str, nargs='?', help='A path to the output directory.', default=None)
 
-
-    # parser.add_argument('--feature', action='store_true')
-    # parser.add_argument('--no-feature', dest='feature', action='store_false')
-    # parser.set_defaults(feature=True)
-
     parser.add_argument('--link', help="Symlink files rather than copying them to the output directory.", action='store_true')
     parser.add_argument('--clean', help="Clean the output directory.", action='store_true')
     parser.add_argument("-p", "--profile", help="Target profile to use during export", default=None)
+    parser.add_argument("-m", "--modules", help="Define the custom asset modules to use for this export.", nargs='*', default=[])
 
     parser.add_argument("-b", "--blender", help="The path to a blender executable.", default="blender")
     args = parser.parse_args()
@@ -37,7 +33,7 @@ def main():
         print("Please provide both an input and output directory path")
         return
 
-    settings = Settings(args.input, args.output, args.blender, args.profile, args.link)
+    settings = Settings(args.input, args.output, args.blender, args.profile, args.link, args.modules)
     if not settings.blenderExecutableValid():
         print("Invalid path passed for blender executable.")
         return

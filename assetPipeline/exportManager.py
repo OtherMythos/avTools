@@ -16,15 +16,25 @@ class ExportManager:
         self.assetModules = {}
         self.copyAssetModule = None
 
+        #Default modules
         self.loadCopyAssetModule()
         self.loadAssetModule("AssetModuleSVG")
         self.loadAssetModule("AssetModuleXCF")
         self.loadAssetModule("AssetModuleBlend")
 
+        self.loadUserModules()
+
     def loadCopyAssetModule(self):
         module = __import__("assetModules.AssetModuleCopy", fromlist=["assetModules"])
         assetClass = getattr(module, "AssetModuleCopy")
         self.copyAssetModule = assetClass(self.settings)
+
+    def loadUserModules(self):
+        if self.settings.modules is None:
+            return
+
+        for i in self.settings.modules:
+            self.loadAssetModule(i)
 
     def loadAssetModule(self, name):
         module = __import__("assetModules." + name, fromlist=["assetModules"])
