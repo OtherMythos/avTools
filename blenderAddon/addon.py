@@ -14,6 +14,9 @@ import shutil
 from io_ogre.ogre.mesh import dot_mesh
 from io_ogre.ogre.skeleton import dot_skeleton
 
+from bpy_extras.io_utils import ImportHelper
+from bpy.types import Operator
+
 import xml.etree.cElementTree as ET
 
 _CONFIG_TAGS_ = ['AV_ENGINE_PATH', 'MATERIAL_EDITOR_AV_SETUP', 'PROJECT_AV_SETUP']
@@ -343,10 +346,10 @@ class avEngineExportBase(bpy.types.Operator):
         process = subprocess.Popen(args, stdout=devnull, stderr=devnull)
         devnull.close()
 
-class avEngineExportSceneFile(avEngineExportBase):
+class avEngineExportSceneFile(avEngineExportBase, ImportHelper):
     """Export avScene"""
     bl_idname = "avengine.export_scene"
-    bl_label = "Export scene"
+    bl_label = "Export scene to file"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -355,7 +358,7 @@ class avEngineExportSceneFile(avEngineExportBase):
 
     def execute(self, context):
         #TODO add a popup to select the proper path.
-        self.exportAvSceneFile("/tmp/test.avscene")
+        self.exportAvSceneFile(self.filepath)
 
         return {'FINISHED'}
 
@@ -401,6 +404,8 @@ class avEngineViewAnimationInEngine(avEngineExportBase):
             track.set("target", str(animIdx))
 
             if ob.animation_data is None:
+                continue
+            if ob.animation_data.action is None:
                 continue
 
             f = ob.animation_data.action.fcurves
@@ -521,7 +526,7 @@ class avEngineViewInProject(avEngineExportBase):
         tempDir = self.getTemporaryDir()
         firstMesh = self.exportMeshes(tempDir, bpy.context.selected_objects)
 
-        createdSetupFile = self.createAvSetupFile(tempDir, targetMesh=firstMesh, targetMaterial=str(tempDir / self.getProjectMaterialFile()))
+        createdSetupFile = self.createAvSetupFile(tempDir, targetMesh=firstMesh, targetMaterialFile=str(tempDir / self.getProjectMaterialFile()))
 
         pathToEngineExecutable = av_plugin_config[_CONFIG_TAGS_[0]]
         pathToMaterialEditor = av_plugin_config[_CONFIG_TAGS_[1]]
