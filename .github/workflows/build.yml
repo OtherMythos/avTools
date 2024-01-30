@@ -36,5 +36,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/OtherMythos/asset-builder-image:latest
           labels: ${{ steps.meta.outputs.labels }}
