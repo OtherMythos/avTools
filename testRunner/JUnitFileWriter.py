@@ -5,7 +5,6 @@ class JUnitFileWriter:
         pass
 
     def write(self, results, outPath):
-        print(results)
         print("Writing results to %s" % outPath)
 
         root = ET.Element("testsuites")

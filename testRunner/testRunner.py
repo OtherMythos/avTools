@@ -122,6 +122,14 @@ def printResults(results):
             printWithPadding("You have failing tests.", titleBanner)
             print(colour.END)
 
+def processExitCode(results):
+    totalFailures = 0
+    for i in results:
+        for y in i:
+            totalFailures += y["totalFailures"]
+
+    sys.exit(0 if totalFailures == 0 else 1)
+
 def main():
     helpText = '''A script to help batch run avEngine tests.
     The engine allows the creation of tests using a built in framework.
@@ -166,6 +174,8 @@ def main():
     if(args.output):
         writer = JUnitFileWriter()
         writer.write(results, Path(args.output))
+
+    processExitCode(results)
 
 if __name__ == "__main__":
     main()
