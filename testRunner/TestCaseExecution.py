@@ -1,6 +1,7 @@
 import configparser
 import os
 
+import json
 import ConfigClass
 import subprocess
 import time
@@ -48,14 +49,10 @@ class TestCaseExecution:
         configFilePath = self.testCasePath / "avSetup.cfg"
         testName = ""
         testFound = False
-        f = open(configFilePath, 'r')
-        for l in f:
-            if("TestName" in l):
-                testName = l.split()[1]
-                testFound = True
-                break
-
-        f.close()
+        with open(configFilePath) as f:
+            d = json.load(f)
+            testName = d["TestName"]
+            testFound = True
 
         if(not testFound):
             testName = "Unnamed test"
@@ -110,7 +107,14 @@ class TestCaseExecution:
             print(i, end='')
         print(colour.END)
 
-        return [errorCode, failure, failureMessageLines]
+        results = {
+            "errorCode": errorCode,
+            "failure": failure,
+            "failureMessage": failureMessageLines,
+            "testName": self.getTestCaseName()
+        }
+
+        return results
 
     def execute(self):
         self.cleanupDirectory()

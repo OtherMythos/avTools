@@ -1,15 +1,28 @@
 import os
 from TestCaseExecution import *
+from pathlib import Path
 
 class TestPlanExecution:
 
-    def __init__(self, testPlanPath):
-        self.testPlanName = testPlanPath.name;
+    def __init__(self, testPlanPath, recursive):
+        self.testPlanName = testPlanPath.name
         self.testPlanPath = testPlanPath
         self.testCaseExecutions = []
         self.testCaseResults = []
 
-        self.findTestCases()
+        if recursive:
+            self.recursiveFindTestCases()
+        else:
+            self.findTestCases()
+
+    def recursiveFindTestCases(self):
+        for root, dirs, files in os.walk(self.testPlanPath):
+            for file in files:
+                if(file == "avSetup.cfg"):
+                    outPath = Path(root) / file
+                    testCase = TestCaseExecution(Path(root))
+                    if(testCase.valid()):
+                        self.testCaseExecutions.append(testCase)
 
     def findTestCases(self):
         for d in os.listdir(self.testPlanPath):
@@ -30,10 +43,12 @@ class TestPlanExecution:
                 totalFailure += 1
                 continue
 
-            if(i[1]):#TestCase failure
+            if(i["failure"]):
                 totalFailure += 1
 
-        passPercentage = 100 - (totalFailure / totalTests) * 100
+        passPercentage = 100
+        if(totalTests > 0):
+            passPercentage = 100 - (totalFailure / totalTests) * 100
 
         beginningColour = None
         if(passPercentage == 100):
@@ -48,9 +63,10 @@ class TestPlanExecution:
         print("Test Pass percentage: " + beginningColour + str("%.2f" % passPercentage) + "%" + colour.END)
 
         resultsDict = {
-            "TestPlanName": self.testPlanName,
-            "TotalTests": totalTests,
-            "TotalFailures": totalFailure
+            "testPlanName": self.testPlanName,
+            "totalTests": totalTests,
+            "totalFailures": totalFailure,
+            "results": self.testCaseResults
         }
 
         return resultsDict
