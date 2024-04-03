@@ -4,7 +4,7 @@ from pathlib import Path
 
 class TestPlanExecution:
 
-    def __init__(self, testPlanPath, recursive):
+    def __init__(self, testPlanPath, recursive=False):
         self.testPlanName = testPlanPath.name
         self.testPlanPath = testPlanPath
         self.testCaseExecutions = []
