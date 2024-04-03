@@ -3,6 +3,7 @@ class TestProjectEntry:
         self.name = name
         self.path = ""
         self.recursive = False
+        self.baseSetupFile = None
 
     def setPath(self, path, configPath):
         self.path = configPath.absolute().parent / path

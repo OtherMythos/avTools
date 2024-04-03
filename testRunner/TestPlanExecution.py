@@ -4,11 +4,12 @@ from pathlib import Path
 
 class TestPlanExecution:
 
-    def __init__(self, testPlanPath, recursive=False):
+    def __init__(self, testPlanPath, recursive=False, baseSetupFile=None):
         self.testPlanName = testPlanPath.name
         self.testPlanPath = testPlanPath
         self.testCaseExecutions = []
         self.testCaseResults = []
+        self.baseSetupFile = baseSetupFile
 
         if recursive:
             self.recursiveFindTestCases()
@@ -75,7 +76,7 @@ class TestPlanExecution:
         print("Executing test plan " + self.testPlanName)
 
         for testCase in self.testCaseExecutions:
-            caseResult = testCase.execute()
+            caseResult = testCase.execute(self.baseSetupFile)
             self.testCaseResults.append(caseResult)
 
         #All the test cases are now complete. Process the results.

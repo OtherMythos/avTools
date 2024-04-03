@@ -29,6 +29,9 @@ def parseTestConfigFile(path):
                 entry.setPath(plan[i], path)
             elif(i == "recursive"):
                 entry.recursive = True if plan[i] == "true" else False
+            elif(i == "setupfilebase"):
+                resolvedBase = str(Path(path).parent / plan[i])
+                entry.baseSetupFile = resolvedBase
         entries.append(entry)
 
     return entries
@@ -50,14 +53,14 @@ def runTestProjectWithPlans(testProjectEntry):
         testPlanPaths.append(testPlanPath)
 
     for d in testPlanPaths:
-        execution = TestPlanExecution(d)
+        execution = TestPlanExecution(d, False, testProjectEntry.baseSetupFile)
         result = execution.execute()
         results.append(result)
 
     return results
 
 def runTestProjectRecursive(testProjectEntry):
-    execution = TestPlanExecution(testProjectEntry.path, True)
+    execution = TestPlanExecution(testProjectEntry.path, True, testProjectEntry.baseSetupFile)
     result = execution.execute()
     return [result]
 

@@ -116,15 +116,19 @@ class TestCaseExecution:
 
         return results
 
-    def execute(self):
+    def execute(self, setupBasePath):
         self.cleanupDirectory()
 
         print("Executing test case " + self.getTestCaseName())
         #Now I need to start up the engine, passing in the path to the directory.
 
         devnull = open(os.devnull, 'w')
-        print(str(self.testCasePath / "avSetup.cfg"))
-        process = subprocess.Popen([str(ConfigClass.pathToEngineExecutable), str(self.testCasePath / "avSetup.cfg")], stdout=devnull, stderr=devnull)
+        argParam = [str(ConfigClass.pathToEngineExecutable)]
+        if setupBasePath is not None:
+            argParam.append(str(setupBasePath))
+        argParam.append(str(self.testCasePath / "avSetup.cfg"))
+        print(" ".join(argParam))
+        process = subprocess.Popen(argParam, stdout=devnull, stderr=devnull)
         devnull.close()
 
         print("     with PID " + str(process.pid))
