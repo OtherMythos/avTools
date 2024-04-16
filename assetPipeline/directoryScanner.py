@@ -112,23 +112,31 @@ class DirectoryScanner:
 
     def findOrphanedMeshXMLFiles(self, path):
         print("scanning for orphaned mesh XML files")
-        for root, subdirs, files in os.walk( str(path) ):
-            rootPath = Path(root)
-            for file in files:
-                filePath = rootPath / file
-                suffix = ''.join(filePath.suffixes)
-                if(".mesh.xml" in suffix):
-                    #Found a mesh.xml file, now check if it has no .mesh file.
-                    #Remove the suffix
-                    targetFile = filePath.with_suffix("")
-                    if targetFile.exists():
-                        continue
-                    print("Found orphan mesh.xml file: %s" % str(filePath))
-                    self.exportManager.exportOgreMeshXML(filePath, targetFile)
-                elif(suffix == ".skeleton.xml"):
-                    #Same as above but with skeletons.
-                    targetFile = filePath.with_suffix("")
-                    if targetFile.exists():
-                        continue
-                    print("Found orphan skeleton.xml file: %s" % str(filePath))
-                    self.exportManager.exportOgreSkeletonXML(filePath, targetFile)
+        #Keep looping to ensure all orphans are dealt with.
+        while True:
+            orphanFound = False
+            for root, subdirs, files in os.walk( str(path) ):
+                rootPath = Path(root)
+                for file in files:
+                    filePath = rootPath / file
+                    suffix = ''.join(filePath.suffixes)
+                    if(".mesh.xml" in suffix):
+                        #Found a mesh.xml file, now check if it has no .mesh file.
+                        #Remove the suffix
+                        targetFile = filePath.with_suffix("")
+                        if targetFile.exists():
+                            continue
+                        print("Found orphan mesh.xml file: %s" % str(filePath))
+                        self.exportManager.exportOgreMeshXML(filePath, targetFile)
+                        orphanFound = True
+                    elif(suffix == ".skeleton.xml"):
+                        #Same as above but with skeletons.
+                        targetFile = filePath.with_suffix("")
+                        if targetFile.exists():
+                            continue
+                        print("Found orphan skeleton.xml file: %s" % str(filePath))
+                        self.exportManager.exportOgreSkeletonXML(filePath, targetFile)
+                        orphanFound = True
+
+            if not orphanFound:
+                break
