@@ -94,7 +94,7 @@ class TestCaseExecution:
         elif(p == 'win32'):
             foundDir = Path(self.appsupportdir()) / "av/logs"
         else:
-            foundDir = Path(self.appsupportdir()) / "av/logs/"
+            foundDir = Path(self.appsupportdir()) / "av/logs/av"
 
         foundDir = foundDir / "av.log"
 
