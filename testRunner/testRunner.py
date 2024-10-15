@@ -147,10 +147,12 @@ def main():
     parser.add_argument("-p", "--path", help="The path to the avTests.cfg file. This file will describe to the test runner what it should actually do.", default="/home/edward/Documents/avTests/avTests.cfg")
     parser.add_argument("-e", "--engine", help="The path to the engine executable.", default="/home/edward/Documents/avEngine/build/av")
     parser.add_argument("-o", "--output", help="Output file in JUnit format", default=None)
+    parser.add_argument("-l", "--log", help="Directory in which to place test log files.", default=None)
     args = parser.parse_args()
 
     enginePath = Path(args.engine).absolute().resolve()
     ConfigClass.pathToEngineExecutable = ""
+    ConfigClass.pathToDumpLogs = None
 
     print("Trying engine path:")
     print(enginePath)
@@ -170,6 +172,14 @@ def main():
         print("The avTests.cfg file provided was not found.")
         print("Please try --help for more information.")
         return
+
+    if(args.log != None):
+        dumpLogsPath = Path(args.log).absolute().resolve()
+        if(dumpLogsPath.exists() and dumpLogsPath.is_dir()):
+            print("Dumping logs to path %s" % str(dumpLogsPath))
+            ConfigClass.pathToDumpLogs = dumpLogsPath
+        else:
+            print("Unable to dump logs to path %s" % str(dumpLogsPath))
 
     results = beginRun(configPath.resolve())
     printResults(results)

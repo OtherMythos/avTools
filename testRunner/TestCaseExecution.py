@@ -1,5 +1,8 @@
 import configparser
 import os
+import sys
+from pathlib import Path
+import shutil
 
 import json
 import ConfigClass
@@ -65,6 +68,55 @@ class TestCaseExecution:
         if(os.path.isfile(testFilePath)):
             os.remove(testFilePath)
 
+    def appsupportdir(self):
+        windows = r'%APPDATA%'
+        windows = os.path.expandvars(windows)
+        if 'APPDATA' not in windows:
+            return windows
+
+        user_directory = os.path.expanduser('~')
+
+        macos = os.path.join(user_directory, 'Library', 'Application Support')
+        if os.path.exists(macos):
+            return macos
+
+        linux = os.path.join(user_directory, '.local', 'share')
+        if os.path.exists(linux):
+            return linux
+
+        return user_directory
+
+    def determineLogPath(self):
+        p = sys.platform
+        foundDir = None
+        if(p == 'darwin'):
+            foundDir = Path(self.appsupportdir()) / "../Logs/av"
+        elif(p == 'win32'):
+            foundDir = Path(self.appsupportdir()) / "av/logs"
+        else:
+            foundDir = Path(self.appsupportdir()) / "av/logs/"
+
+        foundDir = foundDir / "av.log"
+
+        return foundDir
+
+    def destroyLogs(self):
+        foundLogPath = self.determineLogPath()
+        if(foundLogPath.exists() and foundLogPath.is_file()):
+            os.remove(foundLogPath)
+
+    def copyLogToDestination(self):
+        outDirPath = ConfigClass.pathToDumpLogs
+        if(outDirPath is None):
+            return
+
+        foundLogPath = self.determineLogPath()
+        if(foundLogPath.exists() and foundLogPath.is_file()):
+            outName = self.getTestCaseName() + ".log"
+            outPath = Path(outDirPath) / outName
+            shutil.copyfile(foundLogPath, outPath)
+            print("Copied log to %s" % str(outPath))
+
     def determineTestResults(self):
         #The test process has now ended. Check to see what the results are.
         print("Finishing test case " + self.getTestCaseName())
@@ -118,6 +170,7 @@ class TestCaseExecution:
 
     def execute(self, setupBasePath):
         self.cleanupDirectory()
+        self.destroyLogs()
 
         print("Executing test case " + self.getTestCaseName())
         #Now I need to start up the engine, passing in the path to the directory.
@@ -138,4 +191,5 @@ class TestCaseExecution:
 
         time.sleep(1)
 
+        self.copyLogToDestination()
         return self.determineTestResults()
