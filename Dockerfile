@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 WORKDIR /builder
 
@@ -14,9 +14,8 @@ RUN apt-get update && apt-get install -y \
     libxt-dev \
     libxaw7-dev \
     gimp \
-    xvfb
-
-RUN python3 -m pip install CairoSVG
+    xvfb \
+    python3-cairosvg
 
 COPY assetPipelineContainer/entrypoint.sh /builder/entrypoint.sh
 RUN chmod +x /builder/entrypoint.sh
