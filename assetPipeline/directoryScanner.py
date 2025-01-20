@@ -1,6 +1,7 @@
 from pathlib import Path
 from exportManager import ExportManager
 from resourceMetaFile import *
+from directoryTimestampFile import *
 import shutil
 import fnmatch
 
@@ -18,7 +19,7 @@ class DirectoryScanner:
         self.linkFiles = settings.linkFiles
 
         self.blacklistSuffixes = [".blend1", ".swp"]
-        self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json"]
+        self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json", ".dirTimestamps.json"]
 
     def scanPaths(self):
         #First check if the input directory actually exists.
@@ -62,6 +63,10 @@ class DirectoryScanner:
             currentDirMetaFile = ResourceMetaFile()
             currentDirMetaFileValid = False
 
+            targetDirectoryTimestampsPath = rootPath / Path(".dirTimestamps.json")
+            targetDirectoryTimestamps = DirectoryTimestampFile()
+            targetDirectoryTimestamps.parseFile(targetDirectoryTimestampsPath)
+
             if self.resourceMetaBase.valid:
                 #Only check for resourceMeta files if the meta base file is valid.
                 if targetDirectoryResFile.exists() and targetDirectoryResFile.is_file():
@@ -84,8 +89,13 @@ class DirectoryScanner:
                     print("Skipping file %s as blacklisted by resourceMetaBase" % file)
                     continue
 
-                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, targetProfile)
                 filePath = rootPath / file
+
+                if not targetDirectoryTimestamps.timestampRequiresBuild(file, filePath):
+                    print(f"Skipping {file} due to timestamp")
+                    continue
+
+                resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, targetProfile)
 
                 if resSettings.ignore:
                     print("ignoring %s" % filePath)
@@ -100,6 +110,10 @@ class DirectoryScanner:
                 if not successful:
                     #The file extension was not recognised, so just copy the file over.
                     self.exportManager.copyFile(filePath, resSettings)
+
+                targetDirectoryTimestamps.touchFile(file, filePath)
+
+            targetDirectoryTimestamps.write(targetDirectoryTimestampsPath)
 
     '''
     When execution finishes, perform some final checks.
