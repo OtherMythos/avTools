@@ -22,6 +22,7 @@ def main():
     parser.add_argument('-o', '--output', type=str, nargs='?', help='A path to the output directory.', default=None)
 
     parser.add_argument('--link', help="Symlink files rather than copying them to the output directory.", action='store_true')
+    parser.add_argument('--rebuild', help="Rebuild all resources, ignorning constrains like timestamps.", action='store_true')
     parser.add_argument('--clean', help="Clean the output directory.", action='store_true')
     parser.add_argument("-p", "--profile", help="Target profile to use during export", default=None)
     parser.add_argument("-m", "--modules", help="Define the custom asset modules to use for this export.", nargs='*', default=[])
@@ -33,7 +34,7 @@ def main():
         print("Please provide both an input and output directory path")
         return
 
-    settings = Settings(args.input, args.output, args.blender, args.profile, args.link, args.modules)
+    settings = Settings(args.input, args.output, args.blender, args.profile, args.link, args.modules, args.rebuild)
     if not settings.blenderExecutableValid():
         print("Invalid path passed for blender executable.")
         return

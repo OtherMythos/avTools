@@ -17,6 +17,7 @@ class DirectoryScanner:
         self.output = Path(settings.outputDir)
         self.targetProfile = settings.targetProfile
         self.linkFiles = settings.linkFiles
+        self.rebuild = settings.rebuild
 
         self.blacklistSuffixes = [".blend1", ".swp"]
         self.blacklistFiles = ["resourceMetaBase.json", "resourceMeta.json", ".dirTimestamps.json"]
@@ -91,9 +92,11 @@ class DirectoryScanner:
 
                 filePath = rootPath / file
 
-                if not targetDirectoryTimestamps.timestampRequiresBuild(file, filePath):
-                    print(f"Skipping {file} due to timestamp")
-                    continue
+                #Ignore timestamps if the user has requested a full rebuild.
+                if not self.rebuild:
+                    if not targetDirectoryTimestamps.timestampRequiresBuild(file, filePath):
+                        print(f"Skipping {file} due to timestamp")
+                        continue
 
                 resSettings = currentDirMetaFile.determineResourceEntrySettings(self.resourceMetaBase, file, targetProfile)
 
