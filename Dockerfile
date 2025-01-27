@@ -26,9 +26,10 @@ RUN mkdir /output
 COPY assetPipeline /scripts/assetPipeline
 COPY blenderExporter /scripts/blenderExporter
 
-RUN mkdir -p /root/.config/blender/2.82/scripts/addons
+RUN blender --version | awk '{print $2}' | awk -F. '{print $1 "." $2}' > /blenderVersion
+RUN mkdir -p /root/.config/blender/$(cat /blenderVersion)/scripts/addons
 RUN git clone https://github.com/OGRECave/blender2ogre.git /builder/blender2ogre
-RUN ln -s /builder/blender2ogre/io_ogre/ /root/.config/blender/2.82/scripts/addons
+RUN ln -s /builder/blender2ogre/io_ogre/ /root/.config/blender/$(cat /blenderVersion)/scripts/addons
 
 COPY assetPipelineContainer/bin/OgreMeshToolArm /builder/OgreMeshToolArm
 COPY assetPipelineContainer/bin/OgreMeshToolx86 /builder/OgreMeshToolx86

@@ -1,4 +1,5 @@
 import os
+import shutil
 
 class Settings:
     def __init__(self, inputDir, outputDir, blenderPath, targetProfile, linkFiles, modules, rebuild):

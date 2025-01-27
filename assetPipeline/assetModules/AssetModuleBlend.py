@@ -9,7 +9,7 @@ class AssetModuleBlend(AssetModule):
 
         self.extension = ".blend"
 
-        self.blenderExportFile = "../blenderExporter/exportTest.py"
+        self.blenderExportFile = "/scripts/blenderExporter/exportTest.py"
 
         self.checkFiles()
 
@@ -29,7 +29,9 @@ class AssetModuleBlend(AssetModule):
 
         #./blender -b ~/Documents/meshTests/newMesh/Grave.blend --python ~/Documents/avTools/exportTest.py -- /tmp/3
         devnull = open(os.devnull, 'w')
-        process = subprocess.Popen([str(self.settings.blenderPath), "-b", str(filePath), "--python", self.blenderExportFile, "--", str(outputPath)], stdout=devnull, stderr=devnull)
+        paths = [str(self.settings.blenderPath), "-b", str(filePath), "--python", self.blenderExportFile, "--", str(outputPath)]
+        #print(' '.join(paths))
+        process = subprocess.Popen(paths, stdout=devnull, stderr=devnull)
         process.wait()
         #print(process.communicate())
         devnull.close()
