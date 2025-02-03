@@ -5,9 +5,9 @@ WORKDIR /builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DISPLAY :99
 
+RUN apt-get update && apt-get install -y python3
 RUN apt-get update && apt-get install -y \
     wget \
-    python3 \
     python3-pip \
     blender \
     git \
