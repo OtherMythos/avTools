@@ -109,7 +109,7 @@ class DirectoryScanner:
                     continue
 
                 #outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
-                successful = self.exportManager.exportAssetOfExtension(filePath.suffix, filePath)
+                successful = self.exportManager.exportAssetOfExtension(filePath.suffix, filePath, resSettings)
                 if not successful:
                     #The file extension was not recognised, so just copy the file over.
                     self.exportManager.copyFile(filePath, resSettings)

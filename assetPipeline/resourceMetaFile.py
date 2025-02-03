@@ -14,6 +14,7 @@ class ResourceEntrySettings:
         self.widthDiv = 1
         self.heightDiv = 1
         self.ignore = False
+        self.separateLayers = False
 
     '''
     Apply the settings of a ResourceEntry to this one.
@@ -31,6 +32,8 @@ class ResourceEntrySettings:
             self.heightDiv = target.heightDiv
         if target.ignore != False:
             self.ignore = target.ignore
+        if target.separateLayers != False:
+            self.separateLayers = target.separateLayers
 
 '''
 Defines data per directory for resources.
@@ -43,6 +46,7 @@ class ResourceMetaFile:
         self.parsedResources = {}
 
     def parseFile(self, path):
+        print(path)
         filePath = Path(path)
         if not filePath.exists() or not filePath.is_file():
             return False
@@ -136,6 +140,8 @@ class ResourceMetaFile:
             parsedSettings.heightDiv = data["heightDiv"]
         if "ignore" in data and type(data["ignore"]) is bool:
             parsedSettings.ignore = data["ignore"]
+        if "separateLayers" in data and type(data["separateLayers"]) is bool:
+            parsedSettings.separateLayers = data["separateLayers"]
 
         return parsedSettings
 

@@ -7,7 +7,7 @@ class AssetModuleSVG(AssetModule):
         super().__init__(settings)
         self.extension = ".svg"
 
-    def exportForFile(self, filePath):
+    def exportForFile(self, filePath, resSettings):
         retPath = filePath.with_suffix(".png")
         outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
 

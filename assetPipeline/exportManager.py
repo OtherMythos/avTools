@@ -42,12 +42,12 @@ class ExportManager:
         assetModule = assetClass(self.settings)
         self.assetModules[assetModule.getExtension()] = assetModule
 
-    def exportAssetOfExtension(self, extension, filePath):
+    def exportAssetOfExtension(self, extension, filePath, resSettings):
         if not extension in self.assetModules:
             return False
 
         print("Exporting %s" % filePath)
-        self.assetModules[extension].exportForFile(filePath)
+        self.assetModules[extension].exportForFile(filePath, resSettings)
 
         return True
 

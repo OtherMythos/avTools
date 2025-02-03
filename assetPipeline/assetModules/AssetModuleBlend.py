@@ -17,7 +17,7 @@ class AssetModuleBlend(AssetModule):
         #TODO there's a bug here if not in a same directory as this file.
         self.blenderExportFileExists = Path(self.blenderExportFile).exists()
 
-    def exportForFile(self, filePath):
+    def exportForFile(self, filePath, resSettings):
         outputTargetDirectory = self.prepareOutputDirectoryForFile(filePath)
         self.exportBlenderFile(filePath, outputTargetDirectory)
 

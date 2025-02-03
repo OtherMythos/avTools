@@ -13,7 +13,7 @@ class AssetModule:
     def getExtension(self):
         return self.extension
 
-    def exportForFile(self, filePath):
+    def exportForFile(self, filePath, resSettings):
         print("Example module exporting file %s" % filePath)
 
     '''

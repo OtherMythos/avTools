@@ -8,7 +8,7 @@ class AssetModuleXCF(AssetModule):
         super().__init__(settings)
         self.extension = ".xcf"
 
-    def exportForFile(self, filePath):
+    def exportForFile(self, filePath, resSettings):
         retPath = filePath.with_suffix(".png")
         outputTarget = self.prepareOutputDirectoryForFile(retPath, True)
         self.exportGimpProject(filePath, str(outputTarget))
