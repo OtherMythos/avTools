@@ -34,6 +34,15 @@ class AssetModule:
 
         return parentPath
 
+    def isSymlinkCorrect(self, targetPath, outputPath):
+        # Check if output path exists and is a symlink
+        if os.path.islink(outputPath):
+            # Get the actual target of the symlink
+            existingTarget = os.readlink(outputPath)
+            # Compare with the intended target
+            return os.path.abspath(existingTarget) == os.path.abspath(targetPath)
+        return False  # Not a symlink or doesn't exist
+
     def copyFile(self, filePath, resSettings):
         outPath = filePath
         if resSettings.outDir != "":
@@ -41,8 +50,9 @@ class AssetModule:
         outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
 
         if self.settings.linkFiles:
-            os.symlink(filePath, outputTarget)
-            print("symlinked %s to %s" % (filePath, outputTarget))
+            if(not self.isSymlinkCorrect(filePath, outputTarget)):
+                os.symlink(filePath, outputTarget)
+                print("symlinked %s to %s" % (filePath, outputTarget))
         else:
             shutil.copyfile(filePath, outputTarget)
             print("copied %s to %s" % (filePath, outputTarget))
