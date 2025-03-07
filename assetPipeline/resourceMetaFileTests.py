@@ -44,8 +44,8 @@ class ParsedFileTests(unittest.TestCase):
         #Should be the default values from now on.
         self.assertEqual(targetGroup["Rocks.png"].width, None)
         self.assertEqual(targetGroup["Rocks.png"].height, None)
-        self.assertEqual(targetGroup["Rocks.png"].widthDiv, 1)
-        self.assertEqual(targetGroup["Rocks.png"].heightDiv, 1)
+        self.assertEqual(targetGroup["Rocks.png"].widthDiv, None)
+        self.assertEqual(targetGroup["Rocks.png"].heightDiv, None)
         self.assertEqual(targetGroup["Rocks.png"].ignore, True)
 
         self.assertEqual(targetGroup["Grass.png"].outDir, "something.png")
@@ -53,7 +53,7 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(targetGroup["Grass.png"].height, 100)
         self.assertEqual(targetGroup["Grass.png"].widthDiv, 2)
         self.assertEqual(targetGroup["Grass.png"].heightDiv, 2)
-        self.assertEqual(targetGroup["Grass.png"].ignore, False)
+        self.assertEqual(targetGroup["Grass.png"].ignore, None)
 
         #Now check the other profile.
         targetGroup = f.parsedProfileGroups["Desktop"]
@@ -61,12 +61,12 @@ class ParsedFileTests(unittest.TestCase):
         self.assertTrue("other.jpg" in targetGroup)
 
         #Should all just be defaults
-        self.assertEqual(targetGroup["other.jpg"].outDir, "")
+        self.assertEqual(targetGroup["other.jpg"].outDir, None)
         self.assertEqual(targetGroup["other.jpg"].width, None)
         self.assertEqual(targetGroup["other.jpg"].height, None)
-        self.assertEqual(targetGroup["other.jpg"].widthDiv, 1)
-        self.assertEqual(targetGroup["other.jpg"].heightDiv, 1)
-        self.assertEqual(targetGroup["other.jpg"].ignore, False)
+        self.assertEqual(targetGroup["other.jpg"].widthDiv, None)
+        self.assertEqual(targetGroup["other.jpg"].heightDiv, None)
+        self.assertEqual(targetGroup["other.jpg"].ignore, None)
 
         self.assertEqual(f.parsedResources["Grass.png"], "Universal")
         self.assertEqual(f.parsedResources["Rocks.png"], "Universal")
@@ -203,9 +203,9 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(settings.outDir, "somethingElse.png")
         self.assertEqual(settings.width, None)
         self.assertEqual(settings.height, None)
-        self.assertEqual(settings.widthDiv, 1)
-        self.assertEqual(settings.heightDiv, 1)
-        self.assertEqual(settings.ignore, False)
+        self.assertEqual(settings.widthDiv, None)
+        self.assertEqual(settings.heightDiv, None)
+        self.assertEqual(settings.ignore, None)
 
         settings = f.determineResourceEntrySettings(b, "Grass.png", "Other")
         self.assertEqual(settings.outDir, "somethingOther.png")
@@ -228,17 +228,17 @@ class ParsedFileTests(unittest.TestCase):
         self.assertEqual(settings.outDir, "something.png")
         self.assertEqual(settings.width, None)
         self.assertEqual(settings.height, None)
-        self.assertEqual(settings.widthDiv, 1)
-        self.assertEqual(settings.heightDiv, 1)
-        self.assertEqual(settings.ignore, False)
+        self.assertEqual(settings.widthDiv, None)
+        self.assertEqual(settings.heightDiv, None)
+        self.assertEqual(settings.ignore, None)
 
         settings = f.determineResourceEntrySettings(b, "Rocks.png", "Universal")
         self.assertEqual(settings.outDir, "somethingElse.png")
         self.assertEqual(settings.width, None)
         self.assertEqual(settings.height, None)
-        self.assertEqual(settings.widthDiv, 1)
-        self.assertEqual(settings.heightDiv, 1)
-        self.assertEqual(settings.ignore, False)
+        self.assertEqual(settings.widthDiv, None)
+        self.assertEqual(settings.heightDiv, None)
+        self.assertEqual(settings.ignore, None)
 
 
     def test_validateMetaFileProfiles(self):

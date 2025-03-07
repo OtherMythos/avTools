@@ -8,32 +8,26 @@ Defines a single piece of data for building a resource.
 class ResourceEntrySettings:
 
     def __init__(self):
-        self.outDir = ""
-        self.width = None
-        self.height = None
-        self.widthDiv = 1
-        self.heightDiv = 1
-        self.ignore = False
-        self.separateLayers = False
+        self.settings = {}
 
     '''
     Apply the settings of a ResourceEntry to this one.
     '''
     def applySettings(self, target):
-        if target.outDir != "":
-            self.outDir = target.outDir
-        if target.width != None:
-            self.width = target.width
-        if target.height != None:
-            self.height = target.height
-        if target.widthDiv != 1:
-            self.widthDiv = target.widthDiv
-        if target.heightDiv != 1:
-            self.heightDiv = target.heightDiv
-        if target.ignore != False:
-            self.ignore = target.ignore
-        if target.separateLayers != False:
-            self.separateLayers = target.separateLayers
+        self.settings.update(target)
+
+    def __getitem__(self, key):
+        return self.settings.get(key, None)
+
+    def __getattr__(self, key):
+        return self.settings.get(key, None)
+
+    def __setattr__(self, key, value):
+        if key == "settings":  # Prevent infinite recursion in __init__
+            super().__setattr__(key, value)
+        else:
+            self.settings[key] = value
+
 
 '''
 Defines data per directory for resources.
@@ -104,7 +98,7 @@ class ResourceMetaFile:
             targetGroup = self.parsedProfileGroups[i]
             assert resName in targetGroup
             targetResourceSettings = targetGroup[resName]
-            newReturnSettings.applySettings(targetResourceSettings)
+            newReturnSettings.applySettings(targetResourceSettings.settings)
             if targetProfile == i:
                 #Stop building from here
                 break
@@ -127,21 +121,7 @@ class ResourceMetaFile:
 
     def parseProfileData(self, data):
         parsedSettings = ResourceEntrySettings()
-
-        if "outDir" in data and type(data["outDir"]) is str:
-            parsedSettings.outDir = data["outDir"]
-        if "width" in data and type(data["width"]) is int:
-            parsedSettings.width = data["width"]
-        if "height" in data and type(data["height"]) is int:
-            parsedSettings.height = data["height"]
-        if "widthDiv" in data and type(data["widthDiv"]) is int:
-            parsedSettings.widthDiv = data["widthDiv"]
-        if "heightDiv" in data and type(data["heightDiv"]) is int:
-            parsedSettings.heightDiv = data["heightDiv"]
-        if "ignore" in data and type(data["ignore"]) is bool:
-            parsedSettings.ignore = data["ignore"]
-        if "separateLayers" in data and type(data["separateLayers"]) is bool:
-            parsedSettings.separateLayers = data["separateLayers"]
+        parsedSettings.applySettings(data)
 
         return parsedSettings
 

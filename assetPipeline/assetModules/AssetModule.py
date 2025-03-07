@@ -45,7 +45,7 @@ class AssetModule:
 
     def copyFile(self, filePath, resSettings):
         outPath = filePath
-        if resSettings.outDir != "":
+        if resSettings.outDir != None:
             outPath = rootPath / resSettings.outDir
         outputTarget = self.prepareOutputDirectoryForFile(outPath, True)
 
