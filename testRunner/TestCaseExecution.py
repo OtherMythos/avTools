@@ -168,7 +168,7 @@ class TestCaseExecution:
 
         return results
 
-    def execute(self, setupBasePath):
+    def execute(self, setupBasePath, flags):
         self.cleanupDirectory()
         self.destroyLogs()
 
@@ -180,6 +180,8 @@ class TestCaseExecution:
         if setupBasePath is not None:
             argParam.append(str(setupBasePath))
         argParam.append(str(self.testCasePath / "avSetup.cfg"))
+        if flags is not None:
+            argParam.append(flags)
         print(" ".join(argParam))
         process = subprocess.Popen(argParam, stdout=devnull, stderr=devnull)
         devnull.close()

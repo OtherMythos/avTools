@@ -36,7 +36,7 @@ def parseTestConfigFile(path):
 
     return entries
 
-def runTestProjectWithPlans(testProjectEntry):
+def runTestProjectWithPlans(testProjectEntry, flags):
     targetPath = testProjectEntry.path
     results = []
     if(not targetPath.exists()):
@@ -54,27 +54,27 @@ def runTestProjectWithPlans(testProjectEntry):
 
     for d in testPlanPaths:
         execution = TestPlanExecution(d, False, testProjectEntry.baseSetupFile)
-        result = execution.execute()
+        result = execution.execute(flags)
         results.append(result)
 
     return results
 
-def runTestProjectRecursive(testProjectEntry):
+def runTestProjectRecursive(testProjectEntry, flags):
     execution = TestPlanExecution(testProjectEntry.path, True, testProjectEntry.baseSetupFile)
-    result = execution.execute()
+    result = execution.execute(flags)
     return [result]
 
-def runTestProject(testProjectEntry):
+def runTestProject(testProjectEntry, flags):
     if(testProjectEntry.recursive):
-        return runTestProjectRecursive(testProjectEntry)
+        return runTestProjectRecursive(testProjectEntry, flags)
     else:
-        return runTestProjectWithPlans(testProjectEntry)
+        return runTestProjectWithPlans(testProjectEntry, flags)
 
-def beginRun(testConfig):
+def beginRun(testConfig, flags=None):
     configEntries = parseTestConfigFile(testConfig)
     results = []
     for i in configEntries:
-        result = runTestProject(i)
+        result = runTestProject(i, flags)
         results.append(result)
 
     return results
@@ -148,6 +148,7 @@ def main():
     parser.add_argument("-e", "--engine", help="The path to the engine executable.", default="/home/edward/Documents/avEngine/build/av")
     parser.add_argument("-o", "--output", help="Output file in JUnit format", default=None)
     parser.add_argument("-l", "--log", help="Directory in which to place test log files.", default=None)
+    parser.add_argument("-f", "--flags", help="Extra flags to pass to the engine", default=None)
     args = parser.parse_args()
 
     enginePath = Path(args.engine).absolute().resolve()
@@ -181,7 +182,7 @@ def main():
         else:
             print("Unable to dump logs to path %s" % str(dumpLogsPath))
 
-    results = beginRun(configPath.resolve())
+    results = beginRun(configPath.resolve(), args.flags)
     printResults(results)
 
     if(args.output):

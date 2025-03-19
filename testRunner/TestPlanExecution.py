@@ -72,11 +72,11 @@ class TestPlanExecution:
 
         return resultsDict
 
-    def execute(self):
+    def execute(self, flags=None):
         print("Executing test plan " + self.testPlanName)
 
         for testCase in self.testCaseExecutions:
-            caseResult = testCase.execute(self.baseSetupFile)
+            caseResult = testCase.execute(self.baseSetupFile, flags)
             self.testCaseResults.append(caseResult)
 
         #All the test cases are now complete. Process the results.
