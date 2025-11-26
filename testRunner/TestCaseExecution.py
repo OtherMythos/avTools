@@ -117,6 +117,34 @@ class TestCaseExecution:
             shutil.copyfile(foundLogPath, outPath)
             print("Copied log to %s" % str(outPath))
 
+    def copyStdoutStderrToDestination(self, stdout_content, stderr_content):
+        """Copy stdout and stderr outputs to destination directory"""
+        outDirPath = ConfigClass.pathToDumpLogs
+        if(outDirPath is None):
+            return
+
+        # Save stdout
+        if stdout_content:
+            stdout_name = self.getTestCaseName() + "_stdout.log"
+            stdout_path = Path(outDirPath) / stdout_name
+            try:
+                with open(stdout_path, 'w') as f:
+                    f.write(stdout_content)
+                print("Copied stdout to %s" % str(stdout_path))
+            except Exception as e:
+                print(colour.RED + f"Failed to write stdout log: {e}" + colour.END)
+
+        # Save stderr
+        if stderr_content:
+            stderr_name = self.getTestCaseName() + "_stderr.log"
+            stderr_path = Path(outDirPath) / stderr_name
+            try:
+                with open(stderr_path, 'w') as f:
+                    f.write(stderr_content)
+                print("Copied stderr to %s" % str(stderr_path))
+            except Exception as e:
+                print(colour.RED + f"Failed to write stderr log: {e}" + colour.END)
+
     def determineTestResults(self):
         #The test process has now ended. Check to see what the results are.
         print("Finishing test case " + self.getTestCaseName())
@@ -175,7 +203,6 @@ class TestCaseExecution:
         print("Executing test case " + self.getTestCaseName())
         #Now I need to start up the engine, passing in the path to the directory.
 
-        devnull = open(os.devnull, 'w')
         argParam = [str(ConfigClass.pathToEngineExecutable)]
         if setupBasePath is not None:
             argParam.append(str(setupBasePath))
@@ -183,15 +210,19 @@ class TestCaseExecution:
         if flags is not None:
             argParam = argParam + flags.split(' ')
         print(" ".join(argParam))
-        process = subprocess.Popen(argParam, stdout=devnull, stderr=devnull)
-        devnull.close()
+
+        # Use PIPE to capture stdout and stderr
+        process = subprocess.Popen(argParam, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         print("     with PID " + str(process.pid))
 
-        #Wait for the process to finish.
-        process.wait()
+        #Wait for the process to finish and capture output
+        stdout_content, stderr_content = process.communicate()
 
         time.sleep(1)
 
+        # Copy all logs including stdout and stderr
         self.copyLogToDestination()
+        self.copyStdoutStderrToDestination(stdout_content, stderr_content)
+
         return self.determineTestResults()
