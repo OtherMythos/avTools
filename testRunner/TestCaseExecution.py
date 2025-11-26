@@ -212,12 +212,17 @@ class TestCaseExecution:
         print(" ".join(argParam))
 
         # Use PIPE to capture stdout and stderr
-        process = subprocess.Popen(argParam, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # Use bytes mode to avoid encoding issues
+        process = subprocess.Popen(argParam, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         print("     with PID " + str(process.pid))
 
         #Wait for the process to finish and capture output
-        stdout_content, stderr_content = process.communicate()
+        stdout_bytes, stderr_bytes = process.communicate()
+
+        # Decode with error handling for non-UTF-8 content
+        stdout_content = stdout_bytes.decode('utf-8', errors='replace') if stdout_bytes else ""
+        stderr_content = stderr_bytes.decode('utf-8', errors='replace') if stderr_bytes else ""
 
         time.sleep(1)
 
