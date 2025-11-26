@@ -181,7 +181,7 @@ class TestCaseExecution:
             argParam.append(str(setupBasePath))
         argParam.append(str(self.testCasePath / "avSetup.cfg"))
         if flags is not None:
-            argParam.append(flags)
+            argParam = argParam + flags.split(' ')
         print(" ".join(argParam))
         process = subprocess.Popen(argParam, stdout=devnull, stderr=devnull)
         devnull.close()
