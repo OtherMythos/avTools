@@ -15,6 +15,9 @@ class JUnitFileWriter:
                 for y in testPlan["results"]:
                     testCase = ET.SubElement(plan, "testcase")
                     testCase.set("name", y["testName"])
+                    durationMs = y.get("durationMs")
+                    if durationMs is not None:
+                        testCase.set("time", "%.3f" % (durationMs / 1000.0))
                     if y["failure"]:
                         failureEntry = ET.SubElement(testCase, "failure")
                         totalMessage = "\n".join(y["failureMessage"][2:8])

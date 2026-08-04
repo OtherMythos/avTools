@@ -1,3 +1,4 @@
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from TestCaseExecution import colour
@@ -50,12 +51,19 @@ def runTestCases(testPlans, flags=None, jobs=1):
 
     def runOne(workItem):
         plan, index, testCase = workItem
+        #Wraps the whole call, not just the engine subprocess, so this is genuinely "how long
+        #this test case took" as experienced by the scheduler - process spawn, run, log
+        #copying and result parsing all included. perf_counter is monotonic and the highest
+        #resolution clock available, well under the millisecond precision asked for.
+        startTime = time.perf_counter()
         try:
             plan.testCaseResults[index] = testCase.execute(plan.baseSetupFile, flags)
         except Exception as e:
             #One test blowing up shouldn't take the rest of the run with it.
             testCase.log(colour.RED + "Test case %s raised an exception: %s" % (testCase.getTestCaseName(), e) + colour.END)
             plan.testCaseResults[index] = testCase.buildFailureResult(0, ["The test runner raised an exception: %s" % e])
+        durationMs = (time.perf_counter() - startTime) * 1000.0
+        plan.testCaseResults[index]["durationMs"] = durationMs
 
         return workItem
 
@@ -76,4 +84,5 @@ def runTestCases(testPlans, flags=None, jobs=1):
                 if(bufferedOutput):
                     print(bufferedOutput)
 
-            print("[%i/%i] %s (%s)" % (completedCases, totalCases, testCase.getTestCaseName(), plan.testPlanName))
+            durationMs = plan.testCaseResults[index].get("durationMs", 0.0)
+            print("[%i/%i] %s (%s) - %.3fms" % (completedCases, totalCases, testCase.getTestCaseName(), plan.testPlanName, durationMs))
