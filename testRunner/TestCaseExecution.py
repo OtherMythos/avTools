@@ -205,7 +205,7 @@ class TestCaseExecution:
         stdout_content = stdout_bytes.decode('utf-8', errors='replace') if stdout_bytes else ""
         stderr_content = stderr_bytes.decode('utf-8', errors='replace') if stderr_bytes else ""
 
-        time.sleep(1)
+        #time.sleep(1)
 
         #The engine log was written straight to its destination by --logFile, so only
         #the captured stdout and stderr need placing.
