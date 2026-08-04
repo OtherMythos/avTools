@@ -1,8 +1,5 @@
-import configparser
 import os
-import sys
 from pathlib import Path
-import shutil
 
 import json
 import ConfigClass
@@ -25,6 +22,23 @@ class TestCaseExecution:
     def __init__(self, testCasePath):
         self.testCasePath = testCasePath
         self.testCaseName = ""
+
+        #When test cases run concurrently their output is buffered and flushed as a single
+        #block once the case finishes, so simultaneous tests don't interleave their lines.
+        #Running serially this stays True and output streams as it happens, as it always has.
+        self.liveOutput = True
+        self.output = []
+
+    def log(self, message=""):
+        if(self.liveOutput):
+            print(message)
+        else:
+            self.output.append(str(message))
+
+    def flushOutput(self):
+        text = "\n".join(self.output)
+        self.output = []
+        return text
 
     def valid(self):
         configFilePath = self.testCasePath / "avSetup.cfg"
@@ -68,54 +82,10 @@ class TestCaseExecution:
         if(os.path.isfile(testFilePath)):
             os.remove(testFilePath)
 
-    def appsupportdir(self):
-        windows = r'%APPDATA%'
-        windows = os.path.expandvars(windows)
-        if 'APPDATA' not in windows:
-            return windows
-
-        user_directory = os.path.expanduser('~')
-
-        macos = os.path.join(user_directory, 'Library', 'Application Support')
-        if os.path.exists(macos):
-            return macos
-
-        linux = os.path.join(user_directory, '.local', 'share')
-        if os.path.exists(linux):
-            return linux
-
-        return user_directory
-
-    def determineLogPath(self):
-        p = sys.platform
-        foundDir = None
-        if(p == 'darwin'):
-            foundDir = Path(self.appsupportdir()) / "../Logs/av"
-        elif(p == 'win32'):
-            foundDir = Path(self.appsupportdir()) / "av/logs"
-        else:
-            foundDir = Path(self.appsupportdir()) / "av/logs/av"
-
-        foundDir = foundDir / "av.log"
-
-        return foundDir
-
-    def destroyLogs(self):
-        foundLogPath = self.determineLogPath()
-        if(foundLogPath.exists() and foundLogPath.is_file()):
-            os.remove(foundLogPath)
-
-    def copyLogToDestination(self):
-        outDirPath = ConfigClass.pathToDumpLogs
-        if(outDirPath is None):
-            return
-
-        foundLogPath = self.determineLogPath()
-        if(foundLogPath.exists() and foundLogPath.is_file()):
-            outName = self.getTestCaseName() + ".log"
-            outPath = Path(outDirPath) / outName
-            shutil.copyfile(foundLogPath, outPath)
-            print("Copied log to %s" % str(outPath))
+    def engineLogPath(self):
+        #The engine is told to write its log straight to its final destination with --logFile,
+        #rather than to the single shared av.log every engine process would otherwise truncate.
+        return Path(ConfigClass.pathToEngineLogs) / (self.getTestCaseName() + ".log")
 
     def copyStdoutStderrToDestination(self, stdout_content, stderr_content):
         """Copy stdout and stderr outputs to destination directory"""
@@ -130,9 +100,9 @@ class TestCaseExecution:
             try:
                 with open(stdout_path, 'w') as f:
                     f.write(stdout_content)
-                print("Copied stdout to %s" % str(stdout_path))
+                self.log("Copied stdout to %s" % str(stdout_path))
             except Exception as e:
-                print(colour.RED + f"Failed to write stdout log: {e}" + colour.END)
+                self.log(colour.RED + f"Failed to write stdout log: {e}" + colour.END)
 
         # Save stderr
         if stderr_content:
@@ -141,51 +111,59 @@ class TestCaseExecution:
             try:
                 with open(stderr_path, 'w') as f:
                     f.write(stderr_content)
-                print("Copied stderr to %s" % str(stderr_path))
+                self.log("Copied stderr to %s" % str(stderr_path))
             except Exception as e:
-                print(colour.RED + f"Failed to write stderr log: {e}" + colour.END)
+                self.log(colour.RED + f"Failed to write stderr log: {e}" + colour.END)
+
+    def buildFailureResult(self, errorCode, failureMessageLines):
+        #Every path out of determineTestResults returns this same shape, so the results
+        #processing and the JUnit writer never have to special case a failed run.
+        return {
+            "errorCode": errorCode,
+            "failure": True,
+            "failureMessage": failureMessageLines,
+            "testName": self.getTestCaseName()
+        }
 
     def determineTestResults(self):
         #The test process has now ended. Check to see what the results are.
-        print("Finishing test case " + self.getTestCaseName())
+        self.log("Finishing test case " + self.getTestCaseName())
 
         testFilePath = self.testCasePath / "avTestFile.txt"
         if(not testFilePath.exists() or not testFilePath.is_file()):
-            print(colour.RED)
-            print("There was a problem loading the test file from the test run %s. This will be considered a failure." % self.getTestCaseName())
-            print(colour.END)
-            return None
+            self.log(colour.RED)
+            self.log("There was a problem loading the test file from the test run %s. This will be considered a failure." % self.getTestCaseName())
+            self.log(colour.END)
+            return self.buildFailureResult(0, ["No avTestFile.txt was produced by the test run."])
         testFile = open(testFilePath, 'r')
 
         lines = testFile.readlines()
         testFile.close()
         if(len(lines) <= 0):
             #If no lines were written to the file at all, something went wrong in the engine. This should be considered a failure.
-            print(colour.RED + "Test " + self.getTestCaseName() + " returned an empty avTestFile." + colour.END)
-            return [0, True, []]
+            self.log(colour.RED + "Test " + self.getTestCaseName() + " returned an empty avTestFile." + colour.END)
+            return self.buildFailureResult(0, ["The test run produced an empty avTestFile.txt."])
 
         #1 - Successfully finished
         #-1 - Test failed
         #0 - Test still in progress (as here means the process ended, it can be assumed that was because of a crash)
         errorCode = int(lines[1])
-        print("Test finished with error code " + str(errorCode))
+        self.log("Test finished with error code " + str(errorCode))
 
         failure = False
         failureMessageLines = []
         if(errorCode == -1):
-            print("Test case " + self.getTestCaseName() + colour.RED + " Failed" + colour.END + "!")
+            self.log("Test case " + self.getTestCaseName() + colour.RED + " Failed" + colour.END + "!")
             failure = True
             failureMessageLines = lines[3:]
         elif(errorCode == 1):
-            print("Test case " + self.getTestCaseName() + colour.GREEN + " passed" + colour.END + ".")
+            self.log("Test case " + self.getTestCaseName() + colour.GREEN + " passed" + colour.END + ".")
         elif(errorCode == 0):
-            print(colour.RED + "Engine crash during " + self.getTestCaseName() + " execution!" + colour.END)
+            self.log(colour.RED + "Engine crash during " + self.getTestCaseName() + " execution!" + colour.END)
             failure = True
 
-        print(colour.RED)
-        for i in failureMessageLines:
-            print(i, end='')
-        print(colour.END)
+        if(failureMessageLines):
+            self.log(colour.RED + "".join(failureMessageLines) + colour.END)
 
         results = {
             "errorCode": errorCode,
@@ -198,24 +176,27 @@ class TestCaseExecution:
 
     def execute(self, setupBasePath, flags):
         self.cleanupDirectory()
-        self.destroyLogs()
 
-        print("Executing test case " + self.getTestCaseName())
+        self.log("Executing test case " + self.getTestCaseName())
         #Now I need to start up the engine, passing in the path to the directory.
 
         argParam = [str(ConfigClass.pathToEngineExecutable)]
         if setupBasePath is not None:
             argParam.append(str(setupBasePath))
         argParam.append(str(self.testCasePath / "avSetup.cfg"))
+        #Placed ahead of the user supplied flags so its value can never be mistaken for one of them.
+        argParam += ["--logFile", str(self.engineLogPath())]
         if flags is not None:
-            argParam = argParam + flags.split(' ')
-        print(" ".join(argParam))
+            #split() rather than split(' ') so a leading or doubled space doesn't produce an
+            #empty argument, which the engine would take as a positional setup file path.
+            argParam = argParam + flags.split()
+        self.log(" ".join(argParam))
 
         # Use PIPE to capture stdout and stderr
         # Use bytes mode to avoid encoding issues
         process = subprocess.Popen(argParam, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        print("     with PID " + str(process.pid))
+        self.log("     with PID " + str(process.pid))
 
         #Wait for the process to finish and capture output
         stdout_bytes, stderr_bytes = process.communicate()
@@ -226,8 +207,8 @@ class TestCaseExecution:
 
         time.sleep(1)
 
-        # Copy all logs including stdout and stderr
-        self.copyLogToDestination()
+        #The engine log was written straight to its destination by --logFile, so only
+        #the captured stdout and stderr need placing.
         self.copyStdoutStderrToDestination(stdout_content, stderr_content)
 
         return self.determineTestResults()

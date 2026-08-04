@@ -60,8 +60,8 @@ class TestPlanExecution:
             beginningColour = colour.RED
 
 
-        print("Total failures in test plan: " + str(totalFailure))
-        print("Test Pass percentage: " + beginningColour + str("%.2f" % passPercentage) + "%" + colour.END)
+        print("Test plan " + self.testPlanName + " - " + str(totalTests) + " tests, " + str(totalFailure) + " failures. "
+            + "Pass percentage: " + beginningColour + str("%.2f" % passPercentage) + "%" + colour.END)
 
         resultsDict = {
             "testPlanName": self.testPlanName,
@@ -71,14 +71,3 @@ class TestPlanExecution:
         }
 
         return resultsDict
-
-    def execute(self, flags=None):
-        print("Executing test plan " + self.testPlanName)
-
-        for testCase in self.testCaseExecutions:
-            caseResult = testCase.execute(self.baseSetupFile, flags)
-            self.testCaseResults.append(caseResult)
-
-        #All the test cases are now complete. Process the results.
-        print("Test plan " + self.testPlanName + " completed.")
-        return self.processResults()
