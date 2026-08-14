@@ -244,7 +244,7 @@ class TestCaseExecution:
 
         return lines
 
-    def execute(self, setupBasePath, flags):
+    def execute(self, setupBasePath, flags, headless=True):
         self.cleanupDirectory()
 
         self.log("Executing test case " + self.getTestCaseName())
@@ -256,6 +256,8 @@ class TestCaseExecution:
         argParam.append(str(self.testCasePath / "avSetup.cfg"))
         #Placed ahead of the user supplied flags so its value can never be mistaken for one of them.
         argParam += ["--logFile", str(self.engineLogPath())]
+        if headless:
+            argParam.append("--headless")
         if flags is not None:
             #split() rather than split(' ') so a leading or doubled space doesn't produce an
             #empty argument, which the engine would take as a positional setup file path.

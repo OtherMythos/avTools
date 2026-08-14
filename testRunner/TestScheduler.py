@@ -32,7 +32,7 @@ def warnOnDuplicateTestNames(workItems):
         print(colour.YELLOW + "Warning: the test name '%s' is used by %i test cases (in %s). Their log files will collide."
             % (testName, len(planNames), ", ".join(planNames)) + colour.END)
 
-def runTestCases(testPlans, flags=None, jobs=1):
+def runTestCases(testPlans, flags=None, jobs=1, headless=True):
     workItems = collectWorkItems(testPlans)
     totalCases = len(workItems)
     if(totalCases <= 0):
@@ -57,7 +57,7 @@ def runTestCases(testPlans, flags=None, jobs=1):
         #resolution clock available, well under the millisecond precision asked for.
         startTime = time.perf_counter()
         try:
-            plan.testCaseResults[index] = testCase.execute(plan.baseSetupFile, flags)
+            plan.testCaseResults[index] = testCase.execute(plan.baseSetupFile, flags, headless)
         except Exception as e:
             #One test blowing up shouldn't take the rest of the run with it.
             testCase.log(colour.RED + "Test case %s raised an exception: %s" % (testCase.getTestCaseName(), e) + colour.END)

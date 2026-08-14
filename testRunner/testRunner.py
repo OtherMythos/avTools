@@ -82,11 +82,11 @@ def buildTestProject(testProjectEntry):
     else:
         return buildTestProjectWithPlans(testProjectEntry)
 
-def beginRun(configEntries, flags=None, jobs=1):
+def beginRun(configEntries, flags=None, jobs=1, headless=True):
     plansByProject = [buildTestProject(i) for i in configEntries]
 
     allPlans = [plan for projectPlans in plansByProject for plan in projectPlans]
-    TestScheduler.runTestCases(allPlans, flags, jobs)
+    TestScheduler.runTestCases(allPlans, flags, jobs, headless)
 
     #Every test case has now run. Aggregate them back into the per project, per plan
     #structure, in the order the plans were discovered in.
@@ -163,6 +163,7 @@ def main():
     parser.add_argument("-l", "--log", help="Directory in which to place test log files.", default=None)
     parser.add_argument("-f", "--flags", help="Extra flags to pass to the engine", default=None)
     parser.add_argument("-j", "--jobs", help="How many test cases to run at once. Overrides the concurrency value in the avTests.cfg file.", type=int, default=None)
+    parser.add_argument("--no-headless", help="Do not pass --headless to the engine by default.", action="store_true", dest="noHeadless")
     args = parser.parse_args()
 
     enginePath = Path(args.engine).absolute().resolve()
@@ -214,7 +215,7 @@ def main():
         engineLogTempDir = tempfile.TemporaryDirectory(prefix="avTestRunner")
         ConfigClass.pathToEngineLogs = Path(engineLogTempDir.name)
 
-    results = beginRun(configEntries, args.flags, jobs)
+    results = beginRun(configEntries, args.flags, jobs, not args.noHeadless)
     printResults(results)
 
     if(args.output):
