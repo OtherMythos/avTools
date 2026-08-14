@@ -4,6 +4,16 @@ class JUnitFileWriter:
     def __init__(self):
         pass
 
+    def buildMessage(self, failureMessageLines):
+        #A failure message opens with a "Test Case <name>" title and a separator line, neither of
+        #which say anything the testcase element doesn't already. Dropping them is only safe when
+        #they're actually there - a message built by the runner itself can be a single line.
+        lines = [l.rstrip("\n") for l in failureMessageLines]
+        if(len(lines) > 2 and lines[1].startswith("===")):
+            lines = lines[2:]
+
+        return "\n".join(lines[:6])
+
     def write(self, results, outPath):
         print("Writing results to %s" % outPath)
 
@@ -20,9 +30,8 @@ class JUnitFileWriter:
                         testCase.set("time", "%.3f" % (durationMs / 1000.0))
                     if y["failure"]:
                         failureEntry = ET.SubElement(testCase, "failure")
-                        totalMessage = "\n".join(y["failureMessage"][2:8])
-                        failureEntry.set("message", totalMessage)
-                        failureEntry.set("type", "AssertionError")
+                        failureEntry.set("message", self.buildMessage(y["failureMessage"]))
+                        failureEntry.set("type", "EngineCrash" if y.get("engineCrashed") else "AssertionError")
 
         tree = ET.ElementTree(root)
         ET.indent(tree, space="    ", level=0)
